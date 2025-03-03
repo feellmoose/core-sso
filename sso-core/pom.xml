@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.qingyou</groupId>
-        <artifactId>pomelo-sso</artifactId>
+        <artifactId>core-sso</artifactId>
         <version>1.0.0</version>
     </parent>
 
