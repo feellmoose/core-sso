@@ -1,0 +1,28 @@
+<persistence xmlns="https://jakarta.ee/xml/ns/persistence"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence https://jakarta.ee/xml/ns/persistence/persistence_3_0.xsd"
+             version="3.0">
+    <persistence-unit name="sso">
+        <provider>org.hibernate.reactive.provider.ReactivePersistenceProvider</provider>
+
+        <class>com.qingyou.sso.domain.user.User</class>
+        <class>com.qingyou.sso.domain.user.Account</class>
+        <class>com.qingyou.sso.domain.user.UserInfo</class>
+
+        <class>com.qingyou.sso.domain.oauth.ThirdPartyApp</class>
+        <class>com.qingyou.sso.domain.oauth.ThirdPartyRedirect</class>
+
+        <class>com.qingyou.sso.domain.auth.Role</class>
+        <class>com.qingyou.sso.domain.auth.UserRole</class>
+        <class>com.qingyou.sso.domain.auth.TargetRole</class>
+
+        <properties>
+            <property name="jakarta.persistence.schema-generation.database.action" value="drop-and-create"/>
+            <property name="hibernate.show_sql" value="true"/>
+            <property name="hibernate.format_sql" value="true"/>
+            <property name="hibernate.highlight_sql" value="true"/>
+        </properties>
+
+    </persistence-unit>
+
+</persistence>
