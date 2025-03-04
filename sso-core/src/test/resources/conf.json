@@ -1,0 +1,39 @@
+{
+  "application" : {
+      "name" : "pomelo-sso",
+      "version" : "v1.0.0"
+  },
+  "server" : {
+    "host" : "0.0.0.0",
+    "port" : 8080
+  },
+  "database": {
+    "url" : "jdbc:postgresql://localhost:5432/sso",
+    "user" : "postgres",
+    "password" : "passw0rd",
+    "connection" : {
+      "poolSize" : 10
+    }
+  },
+  "redis": {
+    "mode" : "Standalone",
+    "url" : "redis://localhost:6379",
+    "cache" : {
+      "ttl" : 60000
+    }
+  },
+  "security": {
+      "jwt": {
+        "secret" : "jwt_secret"
+      },
+      "cookie": {
+        "name" : "session_id",
+        "maxAge" : 60000000,
+        "timeout" : 60000000,
+        "path" : "/",
+        "domain" : "localhost",
+        "secure" : false,
+        "httpOnly" : false
+      }
+  }
+}
