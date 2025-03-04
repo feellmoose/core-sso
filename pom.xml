@@ -104,11 +104,7 @@
 
         <dependency>
             <groupId>io.vertx</groupId>
-            <artifactId>vertx-redis-client</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.vertx</groupId>
-            <artifactId>vertx-web-sstore-redis</artifactId>
+            <artifactId>vertx-config</artifactId>
         </dependency>
 
         <dependency>

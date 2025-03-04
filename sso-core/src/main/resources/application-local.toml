@@ -1,6 +1,0 @@
-# Custom toml conf
-# Defined in sso-common:com.qingyou.sso.infra.config.Configuration
-# feellmoose 2024.11.18
-[database.hibernate]
-showSql = true
-action = "update"
