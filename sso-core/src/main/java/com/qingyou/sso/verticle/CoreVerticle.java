@@ -1,31 +1,43 @@
 package com.qingyou.sso.verticle;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.qingyou.sso.auth.api.dto.Action;
+import com.qingyou.sso.auth.internal.rbac.Rbac;
+import com.qingyou.sso.auth.internal.rbac.RbacUserInfo;
+import com.qingyou.sso.auth.internal.rbac.TargetInfo;
 import com.qingyou.sso.infra.Constants;
 import com.qingyou.sso.infra.config.ConfigLoader;
+import com.qingyou.sso.infra.config.Configuration;
 import com.qingyou.sso.infra.exception.BizException;
 import com.qingyou.sso.infra.exception.ErrorType;
+import com.qingyou.sso.infra.response.EventMessageHandler;
+import com.qingyou.sso.inject.DaggerRouterHandlerRegisterComponent;
 import com.qingyou.sso.inject.provider.BaseModule;
+import com.qingyou.sso.inject.provider.RouterHandlerModule;
 import com.qingyou.sso.utils.HibernateUtils;
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
-import io.vertx.redis.client.*;
-import lombok.Getter;
+import io.vertx.core.http.HttpServer;
+import io.vertx.ext.web.Router;
 import org.hibernate.reactive.mutiny.Mutiny;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 
 public class CoreVerticle extends AbstractVerticle {
     private static final Logger log = LoggerFactory.getLogger(CoreVerticle.class);
-    @Getter
-    private BaseModule baseModule;
+    private HttpServer server;
 
     private Mutiny.SessionFactory sessionFactory;
-    private Redis redis;
 
     @Override
     public void start(Promise<Void> startPromise) {
@@ -40,75 +52,97 @@ public class CoreVerticle extends AbstractVerticle {
         });
 
         //load redis and test connection
-        var redisFuture = config.flatMap(conf -> {
-            switch (conf.redis().mode()){
-                case Standalone -> {
-                    log.info("Loading Standalone Redis");
-                    RedisOptions options = new RedisOptions()
-                            .setType(RedisClientType.STANDALONE)
-                            .setPassword(conf.redis().password())
-                            .setConnectionString(conf.redis().url());
-                    redis = Redis.createClient(vertx, options);
-                }
-                case Sentinel -> {
-                    log.info("Loading Sentinel Redis");
-                    var sentinel = conf.redis().sentinel();
-                    if (sentinel == null) throw new BizException(ErrorType.Inner.Init, "Load Sentinel Redis failed, Sentinel is null");
-                    RedisOptions options = new RedisOptions()
-                            .setUseReplicas(RedisReplicas.ALWAYS)
-                            .setType(RedisClientType.SENTINEL)
-                            .setAutoFailover(true)
-                            .setMasterName(sentinel.master())
-                            .setPassword(conf.redis().password());
-                    for (var node : sentinel.nodes()) {
-                        options.addConnectionString(node);
-                    }
-                    redis = Redis.createClient(vertx, options);
-                }
-                default -> {
-                    throw new BizException(ErrorType.Inner.Init, "Load Redis failed, Not support mode");
-                }
-            }
-            return redis.connect().onSuccess(RedisConnection::close);
-        }).andThen(result -> {
-            if (result.succeeded()) {
-                log.info("Redis is ready");
-            } else {
-                throw new BizException(ErrorType.Inner.Init, "Connect to redis failed", result.cause());
+        var sessionFactoryFuture = config.flatMap(this::connectSessionFactory);
+
+        Future.all(List.of(config, sessionFactoryFuture))
+                .map(v -> {
+                    sessionFactory = sessionFactoryFuture.result();
+                    return new BaseModule(config.result(), sessionFactoryFuture.result(), new ObjectMapper(), vertx);
+                })
+                .map(this::runAuthHandler)
+                .flatMap(this::runHttpServer)
+                .onSuccess(result -> startPromise.complete())
+                .onFailure(startPromise::fail);
+
+    }
+
+    private Future<Mutiny.SessionFactory> connectSessionFactory(Configuration config) {
+        return vertx.executeBlocking(() -> {
+            try {
+                log.info("Loading Hibernate-Reactive");
+                var factory = HibernateUtils.getEntityManagerFactory(config).unwrap(Mutiny.SessionFactory.class);
+                log.info("Hibernate-Reactive is ready");
+                return factory;
+            } catch (Exception e) {
+                throw new BizException(ErrorType.Inner.Init, "Hibernate Reactive is failed", e);
             }
         });
+    }
 
-        var sessionFactoryFuture = config.flatMap(conf ->
-                vertx.executeBlocking(() -> {
-                    try {
-                        log.info("Loading Hibernate-Reactive");
-                        var factory = HibernateUtils.getEntityManagerFactory(conf).unwrap(Mutiny.SessionFactory.class);
-                        log.info("Hibernate-Reactive is ready");
-                        return factory;
-                    } catch (Exception e) {
-                        throw new BizException(ErrorType.Inner.Init, "Hibernate Reactive is failed", e);
-                    }
-                })
-        );
+    private BaseModule runAuthHandler(BaseModule baseModule) {
+        final Rbac rbac = new Rbac(baseModule.getSessionFactory());
+        var objectMapper = baseModule.getObjectMapper();
+        vertx.eventBus().consumer("auth_rbac", EventMessageHandler.wrap(json -> {
+            try {
+                return objectMapper.<Action<RbacUserInfo, TargetInfo>>readValue(json, new TypeReference<>() {
+                });
+            } catch (JsonProcessingException e) {
+                throw new BizException(e);
+            }
+        }, action -> rbac.enforceAndThrows(action)));
+        vertx.eventBus().consumer("multi_auth_rbac", EventMessageHandler.<Collection<Action<RbacUserInfo, TargetInfo>>,CompositeFuture>wrap(json -> {
+            try {
+                return objectMapper.readValue(json, new TypeReference<>() {
+                });
+            } catch (JsonProcessingException e) {
+                throw new BizException(e);
+            }
+        }, actions -> {
+            List<Future<Void>> futures = new ArrayList<>();
+            for (Action<RbacUserInfo,TargetInfo> action : actions) {
+                futures.add(rbac.enforceAndThrows(action));
+            }
+            return Future.all(futures);
+        }));
+        log.info("auth_rbac event handler started");
+        return baseModule;
+    }
 
-        List<Future<?>> prepare = List.of(config, sessionFactoryFuture, redisFuture);
-        Future.all(prepare).onSuccess(v -> {
-            sessionFactory = sessionFactoryFuture.result();
-            baseModule = new BaseModule(config.result(), sessionFactoryFuture.result(), redis, new ObjectMapper(), vertx);
-            startPromise.complete();
-        }).onFailure(startPromise::fail);
+    private Future<HttpServer> runHttpServer(BaseModule baseModule){
+        //server start must after the config and the persistence
+        var serverConf = baseModule.configuration().server();
+
+        Router router = Router.router(vertx);
+        server = vertx.createHttpServer();
+
+        var register = DaggerRouterHandlerRegisterComponent.builder()
+                .baseModule(baseModule)
+                .routerHandlerModule(new RouterHandlerModule(router))
+                .build();
+        register.registerAllGroups();
+        register.registerNotFoundRouter();
+        log.info("Dagger inject RouterGroups");
+
+        return server.requestHandler(router).listen(serverConf.port(), serverConf.host()).onComplete(http -> {
+            if (http.succeeded()) {
+                log.info("Http Server started on {}:{}", serverConf.host(), serverConf.port());
+            } else {
+                throw new BizException(ErrorType.Inner.Init, http.cause());
+            }
+        }).timeout(5, TimeUnit.SECONDS);
     }
 
     @Override
     public void stop(Promise<Void> stopPromise) {
-        var sec = vertx.<Void>executeBlocking(() -> {
-            sessionFactory.close();
-            return null;
-        });
-        sec.onSuccess(f -> {
-            redis.close();
-            log.info("Service stopped");
-            stopPromise.complete();
+        server.close().onSuccess(f -> {
+            log.info("Http server stopped");
+        }).flatMap(v -> {
+            return vertx.<Void>executeBlocking(() -> {
+                sessionFactory.close();
+                log.info("Service stopped");
+                stopPromise.complete();
+                return null;
+            });
         }).onFailure(stopPromise::fail);
     }
 
