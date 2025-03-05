@@ -3,7 +3,7 @@ name: Maven Build and Deploy
 on:
   push:
     branches:
-      - Release
+      - 'releases/*'
 
 jobs:
   build:
