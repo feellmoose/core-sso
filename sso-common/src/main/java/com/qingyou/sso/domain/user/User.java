@@ -20,8 +20,11 @@ public class User {
     @Column(name = "name", nullable = true)
     private String name;
     @NaturalId
-    @Column(name = "student_id", unique = true)
-    private String studentId;
+    @Column(name = "email", unique = true)
+    private String email;
+    @NaturalId
+    @Column(name = "email", unique = true)
+    private String phone;
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @OneToOne(cascade = CascadeType.DETACH, fetch = FetchType.LAZY)

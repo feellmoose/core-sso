@@ -8,4 +8,6 @@ import io.vertx.core.Future;
 
 public interface UserRepository extends BaseRepository<User> {
     Future<@Nullable User> findByUsername(String username);
+    Future<@Nullable User> findByEmail(String email);
+    Future<@Nullable User> findByPhone(String phone);
 }

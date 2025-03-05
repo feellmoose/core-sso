@@ -23,4 +23,22 @@ public class UserRepositoryImpl extends BaseRepositoryImpl<User> implements User
                         .getSingleResultOrNull()
         ).convert().with(UniConvertUtils::toFuture);
     }
+
+    @Override
+    public Future<@Nullable User> findByEmail(String email) {
+        return sessionFactory.withSession(session ->
+                session.createQuery("from User where User.email= :email", User.class)
+                        .setParameter("email", email)
+                        .getSingleResultOrNull()
+        ).convert().with(UniConvertUtils::toFuture);
+    }
+
+    @Override
+    public Future<@Nullable User> findByPhone(String phone) {
+        return sessionFactory.withSession(session ->
+                session.createQuery("from User where User.phone= :phone", User.class)
+                        .setParameter("phone", phone)
+                        .getSingleResultOrNull()
+        ).convert().with(UniConvertUtils::toFuture);
+    }
 }

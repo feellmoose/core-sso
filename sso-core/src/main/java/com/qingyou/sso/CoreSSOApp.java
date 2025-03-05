@@ -20,15 +20,22 @@ public class CoreSSOApp {
         InternalLoggerFactory.setDefaultFactory(Slf4JLoggerFactory.INSTANCE);
     }
 
+    public static void main(String[] args) {
+        new CoreSSOApp().start()
+                .toCompletionStage()
+                .toCompletableFuture()
+                .join();
+    }
+
     public Future<Void> start(){
         long start = System.currentTimeMillis();
 
-
-        ClusterManager clusterManager = new HazelcastClusterManager();
-
-        var vertx = Vertx.builder()
-                .withClusterManager(clusterManager)
-                .buildClustered();
+//        ClusterManager clusterManager = new HazelcastClusterManager();
+//
+//        var vertx = Vertx.builder()
+//                .withClusterManager(clusterManager)
+//                .buildClustered();
+        var vertx = Future.succeededFuture(Vertx.vertx());
 
         return vertx.flatMap(v -> {
             var core = new CoreVerticle();
