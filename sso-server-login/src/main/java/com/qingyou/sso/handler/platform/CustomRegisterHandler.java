@@ -4,5 +4,5 @@ import com.qingyou.sso.api.Login;
 import com.qingyou.sso.api.Register;
 
 
-public interface CustomHandler extends Login, Register {
+public interface CustomRegisterHandler extends Login, Register {
 }

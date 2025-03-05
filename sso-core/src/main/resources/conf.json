@@ -32,5 +32,15 @@
         "secure" : false,
         "httpOnly" : false
       }
+  },
+  "mail": {
+    "expire": 60000,
+    "username": "feell@163.com",
+    "password": "",
+    "host" : "",
+    "port" : "",
+    "from" : "",
+    "subject" : "[Pomelo SSO] One-Time Passcode (OTP)",
+    "pattern" : "Code: %s"
   }
 }
