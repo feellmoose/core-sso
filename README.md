@@ -1,6 +1,6 @@
 # Pomelo SSO [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
 
-**Pomelo SSO** is a lightweight Single Sign-On (SSO) system implementing OAuth 2.0 and OpenID Connect (OIDC) standards, featuring JWT authentication and flexible HTTP Cookie-based session management. Designed for high-concurrency scenarios with Vert.x.
+**Pomelo SSO** is a lightweight single sign-on (SSO) system built on the OAuth 2.0 and OpenID Connect (OIDC) standards. It utilizes HTTP Cookie-based SSO session management and is designed for high-concurrency scenarios based on the Vert.x framework.
 
 English/[中文](https://github.com/feellmoose/core-sso/blob/main/README_CN.md)
 
