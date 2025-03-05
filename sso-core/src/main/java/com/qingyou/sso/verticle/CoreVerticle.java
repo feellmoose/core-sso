@@ -45,8 +45,7 @@ public class CoreVerticle extends AbstractVerticle {
         var config = new ConfigLoader(vertx).load().andThen(result -> {
             if (result.succeeded()) {
                 log.info("Load Conf successfully");
-                var application = result.result().application();
-                log.info("\n{}", Constants.logo(application.name(), application.version()));
+                log.info("\n{}", Constants.logo("pomelo-sso", "v1.0.1"));
             } else {
                 throw new BizException(ErrorType.Inner.Init, "Load Conf failed", result.cause());
             }
