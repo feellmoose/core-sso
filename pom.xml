@@ -92,6 +92,7 @@
             <artifactId>vertx-web</artifactId>
         </dependency>
 
+        <!-- plugin-->
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-pg-client</artifactId>
@@ -100,6 +101,11 @@
             <groupId>com.ongres.scram</groupId>
             <artifactId>client</artifactId>
             <version>2.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-mail-client</artifactId>
         </dependency>
 
         <dependency>

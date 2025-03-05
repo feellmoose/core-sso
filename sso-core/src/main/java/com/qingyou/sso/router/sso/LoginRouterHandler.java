@@ -8,7 +8,7 @@ import io.vertx.ext.web.Router;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class LoginRouterHandler  implements Handler<Router> {
+public class LoginRouterHandler implements Handler<Router> {
     private final SSOHandler ssoHandler;
 
     public LoginRouterHandler(BaseSSOService baseSSOService) {

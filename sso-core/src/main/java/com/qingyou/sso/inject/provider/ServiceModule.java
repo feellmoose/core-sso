@@ -5,14 +5,12 @@ import com.qingyou.sso.handler.AuthHandler;
 import com.qingyou.sso.infra.cache.Cache;
 import com.qingyou.sso.infra.config.Configuration;
 import com.qingyou.sso.infra.repository.domain.*;
-import com.qingyou.sso.service.BaseSSOService;
-import com.qingyou.sso.service.DefaultBaseSSOService;
-import com.qingyou.sso.service.ThirdPartyAppService;
-import com.qingyou.sso.service.ThirdPartyAppServiceImpl;
+import com.qingyou.sso.service.*;
 import com.qingyou.sso.serviece.DefaultOAuth2Service;
 import com.qingyou.sso.serviece.OAuth2Service;
 import dagger.Module;
 import dagger.Provides;
+import io.vertx.ext.mail.MailClient;
 import jakarta.inject.Singleton;
 
 @Module
@@ -40,6 +38,12 @@ public class ServiceModule {
     @Singleton
     public AuthHandler.Factory provideAuthHandlerFactory(AuthService authService, UserRepository userRepository) {
         return new AuthHandler.Factory(userRepository, authService);
+    }
+
+    @Provides
+    @Singleton
+    public EmailSSOService provideEmailSSOService(MailClient mailClient, Configuration configuration, Cache cache, UserRepository userRepository, AccountRepository accountRepository) {
+        return new DefaultEmailSSOService(mailClient, configuration, cache, userRepository, accountRepository);
     }
 
 }

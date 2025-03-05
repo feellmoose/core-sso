@@ -1,15 +1,18 @@
 package com.qingyou.sso.inject.provider;
 
 import com.qingyou.sso.handler.AuthHandler;
+import com.qingyou.sso.handler.platform.EmailSSOHandler;
 import com.qingyou.sso.infra.config.Configuration;
 import com.qingyou.sso.router.admin.AdminRouterHandler;
 import com.qingyou.sso.router.global.NotFoundRouterHandler;
 import com.qingyou.sso.router.global.SessionRouterHandler;
 import com.qingyou.sso.router.oauth.OAuth2RouterHandler;
-import com.qingyou.sso.router.sso.CustomRouterHandler;
-import com.qingyou.sso.router.sso.CustomRouterHandlerRegister;
+import com.qingyou.sso.router.sso.CustomRegisterRouterHandler;
+import com.qingyou.sso.router.sso.EmailSSORouterHandler;
 import com.qingyou.sso.router.sso.LoginRouterHandler;
+import com.qingyou.sso.router.sso.SSORouterHandlerRegister;
 import com.qingyou.sso.service.BaseSSOService;
+import com.qingyou.sso.service.EmailSSOService;
 import com.qingyou.sso.service.ThirdPartyAppService;
 import com.qingyou.sso.serviece.OAuth2Service;
 import dagger.Module;
@@ -35,6 +38,14 @@ public class RouterHandlerModule {
 
     @Provides
     @Singleton
+    public EmailSSORouterHandler provideEmailSSORouterHandler(EmailSSOService emailSSOService) {
+        var handler = new EmailSSORouterHandler(new EmailSSOHandler(emailSSOService));
+        handler.handle(router);
+        return handler;
+    }
+
+    @Provides
+    @Singleton
     LoginRouterHandler provideLoginRouterHandler(BaseSSOService baseSSOService) {
         var handler = new LoginRouterHandler(baseSSOService);
         handler.handle(router);
@@ -51,11 +62,11 @@ public class RouterHandlerModule {
 
     @Provides
     @Singleton
-    CustomRouterHandlerRegister provideCustomRouterHandlerRegister() {
-        for (CustomRouterHandler handler: CustomRouterHandlerRegister.Instance.getAll()){
+    SSORouterHandlerRegister provideCustomRouterHandlerRegister() {
+        for (CustomRegisterRouterHandler handler: SSORouterHandlerRegister.Instance.getAll()){
             handler.handle(router);
         }
-        return CustomRouterHandlerRegister.Instance;
+        return SSORouterHandlerRegister.Instance;
     }
 
     @Provides

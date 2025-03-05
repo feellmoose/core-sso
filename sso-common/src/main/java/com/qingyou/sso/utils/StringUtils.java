@@ -18,4 +18,9 @@ public final class StringUtils {
         return sb.toString();
     }
 
+    public static String randomNum(int length) {
+        int num = RANDOM.nextInt((int) Math.pow(10,length-1), (int) Math.pow(10,length)-1);
+        return String.valueOf(num);
+    }
+
 }

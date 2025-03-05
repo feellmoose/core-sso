@@ -1,6 +1,7 @@
 package com.qingyou.sso.infra.config;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import io.vertx.core.json.JsonObject;
 
 import java.util.List;
 
@@ -9,7 +10,8 @@ public record Configuration(
         Server server,
         Application application,
         Database database,
-        Security security
+        Security security,
+        Mail mail
 ) {
     public record Server(String host, int port) {
     }
@@ -32,6 +34,10 @@ public record Configuration(
         public record Cookie(String name, long expire, long maxAge, long timeout, String path, String domain,
                              boolean secure, boolean httpOnly) {
         }
+    }
+
+    public record Mail(String host, int port, String username, String password, String from, String subject, String pattern, long expire) {
+
     }
 
 

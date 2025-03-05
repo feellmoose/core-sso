@@ -8,6 +8,7 @@ import com.qingyou.sso.auth.internal.rbac.Rbac;
 import com.qingyou.sso.auth.internal.rbac.RbacUserInfo;
 import com.qingyou.sso.auth.internal.rbac.TargetInfo;
 import com.qingyou.sso.infra.Constants;
+import com.qingyou.sso.infra.cache.DefaultCache;
 import com.qingyou.sso.infra.config.ConfigLoader;
 import com.qingyou.sso.infra.config.Configuration;
 import com.qingyou.sso.infra.exception.BizException;
@@ -53,11 +54,12 @@ public class CoreVerticle extends AbstractVerticle {
 
         //load redis and test connection
         var sessionFactoryFuture = config.flatMap(this::connectSessionFactory);
+        var cache = DefaultCache.build(vertx);
 
-        Future.all(List.of(config, sessionFactoryFuture))
+        Future.all(List.of(config, sessionFactoryFuture, cache))
                 .map(v -> {
                     sessionFactory = sessionFactoryFuture.result();
-                    return new BaseModule(config.result(), sessionFactoryFuture.result(), new ObjectMapper(), vertx);
+                    return new BaseModule(config.result(), sessionFactoryFuture.result(), new ObjectMapper(), vertx, cache.result());
                 })
                 .map(this::runAuthHandler)
                 .flatMap(this::runHttpServer)
@@ -121,6 +123,11 @@ public class CoreVerticle extends AbstractVerticle {
                 .build();
         register.registerAllGroups();
         register.registerNotFoundRouter();
+
+        if (baseModule.configuration().mail() != null) {
+            register.registerEmailSSORouters();
+        }
+
         log.info("Dagger inject RouterGroups");
 
         return server.requestHandler(router).listen(serverConf.port(), serverConf.host()).onComplete(http -> {
