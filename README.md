@@ -23,10 +23,6 @@ Create `config.json` configuration file:
 
 ```json
 {
-  "application" : {
-      "name" : "pomelo-sso",
-      "version" : "v1.0.0"
-  },
   "server" : {
     "host" : "0.0.0.0",
     "port" : 8080

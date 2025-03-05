@@ -8,15 +8,11 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record Configuration(
         Server server,
-        Application application,
         Database database,
         Security security,
         Mail mail
 ) {
     public record Server(String host, int port) {
-    }
-
-    public record Application(String name, String version) {
     }
 
     public record Database(String url, String user, String password, Connection connection, Hibernate hibernate) {
