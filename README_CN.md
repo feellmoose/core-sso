@@ -6,6 +6,8 @@
 
 **Pomelo SSO** 是基于 OAuth 2.0 和 OpenID Connect (OIDC) 标准实现的轻量级单点登录系统，支持 JWT 认证和基于 HTTP Cookie 的灵活会话管理，专为 Vert.x 高并发场景设计。
 
+[English](https://github.com/feellmoose/core-sso/blob/main/README.md)/中文
+
 ## ✨ 核心特性
 
 - **标准协议支持**：完整实现 OAuth 2.0 和 OpenID Connect (OIDC) 协议
@@ -147,7 +149,7 @@ java -jar target/pomelo-sso-1.0.0.jar \
 - 及时更新相关文档
 - 使用约定式提交规范
 
-发现漏洞？[提交 issue](https://github.com/your-repo/issues)
+发现漏洞？[提交 issue](https://github.com/feellmoose/core-sso/issues)
 
 ## ⚖️ 开源协议
 
