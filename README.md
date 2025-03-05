@@ -1,8 +1,159 @@
-# Pomelo SSO
+# Pomelo SSO [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
 
-### Package
+**Pomelo SSO** is a lightweight Single Sign-On (SSO) system implementing OAuth 2.0 and OpenID Connect (OIDC) standards, featuring JWT authentication and flexible HTTP Cookie-based session management. Designed for high-concurrency scenarios with Vert.x.
 
-本项目中打包生成的可用文件在项目根目录的 `target` 目录下，命名为 `pomelo-sso-${project.version}-fat.jar`，直接使用 `jdk-17` 环境运行即可，可以携带 `-Dprofiles.active=prod` 来指定使用配置文件，携带 `-Dprofiles.path=/` 来指定使用配置文件。
+## ✨ Core Features
 
-例：`java  "-Dprofiles.active=local"  "-Dprofiles.path=E:\conf\" -jar pomelo-sso-1.0.0-fat.jar`
+- **Standards Compliance**: Full implementation of OAuth 2.0 and OpenID Connect (OIDC) protocols
+- **Session Management**: Stateful cookie-based session mechanism
+- **High-Performance Architecture**: Asynchronous non-blocking I/O model powered by Vert.x
+- **Database Support**: PostgreSQL integration with Hibernate ORM
+- **Extensible Design**: Modular architecture supporting custom authentication flows
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Java 17+
+- PostgreSQL 13+
+
+### Configuration
+
+Create `config.json` configuration file:
+
+```json
+{
+  "application" : {
+      "name" : "pomelo-sso",
+      "version" : "v1.0.0"
+  },
+  "server" : {
+    "host" : "0.0.0.0",
+    "port" : 8080
+  },
+  "database": {
+    "url" : "jdbc:postgresql://localhost:5432/sso",
+    "user" : "postgres",
+    "password" : "passw0rd",
+    "connection" : {
+      "poolSize" : 10
+    },
+    "hibernate": {
+      "showSql" : true,
+      "action": "update"
+    }
+  },
+  "security": {
+      "jwt": {
+        "secret" : "jwt_secret"
+      },
+      "cookie": {
+        "name" : "session_id",
+        "maxAge" : 60000000,
+        "timeout" : 60000000,
+        "path" : "/",
+        "domain" : "localhost",
+        "secure" : false,
+        "httpOnly" : false
+      }
+  },
+  "mail": {
+    "expire": 60000,
+    "username": "user@example.com",
+    "password": "",
+    "host" : "",
+    "port" : "",
+    "from" : "user@example.com",
+    "subject" : "[Pomelo SSO] One-Time Passcode (OTP)",
+    "pattern" : "Verification Code: %s"
+  }
+}
+```
+
+### Standalone Deployment
+
+```bash
+java -jar target/pomelo-sso-1.0.0.jar -conf config.json
+```
+
+**Security Note**: Use strong secrets in production and disable debug configurations.
+
+### 🌀 Cluster Deployment (High Availability)
+
+> Please refer to the official Vert.x documentation
+
+**Cluster configuration file** `cluster.xml`:
+
+```xml
+<vertx-cluster>
+  <hazelcast>
+    <network>
+      <port auto-increment="true">5701</port>
+      <join>
+        <multicast enabled="false"/>
+        <tcp-ip enabled="true">
+          <member>node1.example.com</member>
+          <member>node2.example.com</member>
+        </tcp-ip>
+      </join>
+    </network>
+  </hazelcast>
+</vertx-cluster>
+```
+
+**Startup command**:
+
+```bash
+java -jar target/pomelo-sso-1.0.0.jar \
+-conf config.json \
+-cluster -cluster-host 192.168.1.100 \
+-cluster-port 15701 \
+-cluster-config cluster.xml
+```
+
+## 📌 Roadmap
+
+### Implemented Features
+
+- Core OAuth 2.0/OIDC protocol implementation
+- JWT & Cookie session management
+- PostgreSQL integration
+- Email OTP authentication flow
+
+### Planned Features
+
+- Docker & Docker Compose support
+- Vert.x cluster configuration
+- Admin console
+- Multi-database support (MySQL/MongoDB)
+- Performance benchmarking
+- Social login extensions
+- Configuration wizard UI
+
+## 🤝 Contributing
+
+We welcome contributions through the following process:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/new-feature`)
+3. Commit standardized code changes
+4. Push to the branch (`git push origin feature/new-feature`)
+5. Open a Pull Request
+
+**Contribution Guidelines:**
+
+- Follow existing code style
+- Include unit tests for new features
+- Update relevant documentation
+- Use conventional commit messages
+
+Found a vulnerability? [Open an issue](https://github.com/your-repo/issues)
+
+## ⚖️ License
+
+Distributed under the MIT License. See `LICENSE` for details.
+
+------
+
+**Like what you see?** ⭐ Star the repository to support development!
 
