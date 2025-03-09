@@ -4,46 +4,46 @@ import com.qingyou.sso.infra.repository.domain.*;
 import com.qingyou.sso.infra.repository.domain.impl.*;
 import dagger.Module;
 import dagger.Provides;
+import io.vertx.sqlclient.SqlClient;
 import jakarta.inject.Singleton;
-import org.hibernate.reactive.mutiny.Mutiny;
 
 @Module
 public class RepositoryModule {
 
     @Provides
     @Singleton
-    public AccountRepository provideAccountRepository(Mutiny.SessionFactory sessionFactory) {
-        return new AccountRepositoryImpl(sessionFactory);
+    public AccountRepository provideAccountRepository(SqlClient client) {
+        return new AccountRepositoryImpl(client);
     }
 
     @Provides
     @Singleton
-    public UserRepository provideUserRepository(Mutiny.SessionFactory sessionFactory) {
-        return new UserRepositoryImpl(sessionFactory);
+    public UserRepository provideUserRepository(SqlClient client) {
+        return new UserRepositoryImpl(client);
     }
 
     @Provides
     @Singleton
-    public UserInfoRepository provideUserInfoRepository(Mutiny.SessionFactory sessionFactory) {
-        return new UserInfoRepositoryImpl(sessionFactory);
+    public UserInfoRepository provideUserInfoRepository(SqlClient client) {
+        return new UserInfoRepositoryImpl(client);
     }
 
     @Provides
     @Singleton
-    public ThirdPartyRepository provideThirdPartyRepository(Mutiny.SessionFactory sessionFactory) {
-        return new ThirdPartyRepositoryImpl(sessionFactory);
+    public ThirdPartyRepository provideThirdPartyRepository(SqlClient client) {
+        return new ThirdPartyRepositoryImpl(client);
     }
 
     @Provides
     @Singleton
-    public ThirdPartyRedirectRepository provideThirdPartyRedirectRepository(Mutiny.SessionFactory sessionFactory) {
-        return new ThirdPartyRedirectRepositoryImpl(sessionFactory);
+    public ThirdPartyRedirectRepository provideThirdPartyRedirectRepository(SqlClient client) {
+        return new ThirdPartyRedirectRepositoryImpl(client);
     }
 
     @Provides
     @Singleton
-    public ThirdPartyRequiredUserInfoRepository provideThirdPartyRequiredUserInfoRepository(Mutiny.SessionFactory sessionFactory) {
-        return new ThirdPartyRequiredUserInfoRepositoryImpl(sessionFactory);
+    public ThirdPartyRequiredUserInfoRepository provideThirdPartyRequiredUserInfoRepository(SqlClient client) {
+        return new ThirdPartyRequiredUserInfoRepositoryImpl(client);
     }
 
 

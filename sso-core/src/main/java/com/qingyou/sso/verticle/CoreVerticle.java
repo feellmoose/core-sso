@@ -17,14 +17,13 @@ import com.qingyou.sso.infra.response.EventMessageHandler;
 import com.qingyou.sso.inject.DaggerRouterHandlerRegisterComponent;
 import com.qingyou.sso.inject.provider.BaseModule;
 import com.qingyou.sso.inject.provider.RouterHandlerModule;
-import com.qingyou.sso.utils.HibernateUtils;
-import io.vertx.core.AbstractVerticle;
-import io.vertx.core.CompositeFuture;
-import io.vertx.core.Future;
-import io.vertx.core.Promise;
+import io.vertx.core.*;
 import io.vertx.core.http.HttpServer;
 import io.vertx.ext.web.Router;
-import org.hibernate.reactive.mutiny.Mutiny;
+import io.vertx.pgclient.PgBuilder;
+import io.vertx.pgclient.PgConnectOptions;
+import io.vertx.sqlclient.PoolOptions;
+import io.vertx.sqlclient.SqlClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,8 +36,7 @@ import java.util.concurrent.TimeUnit;
 public class CoreVerticle extends AbstractVerticle {
     private static final Logger log = LoggerFactory.getLogger(CoreVerticle.class);
     private HttpServer server;
-
-    private Mutiny.SessionFactory sessionFactory;
+    private SqlClient client;
 
     @Override
     public void start(Promise<Void> startPromise) {
@@ -52,36 +50,43 @@ public class CoreVerticle extends AbstractVerticle {
         });
 
         //load redis and test connection
-        var sessionFactoryFuture = config.flatMap(this::connectSessionFactory);
         var cache = DefaultCache.build(vertx);
+        var clientFuture = config.map(c -> connectSqlClient(c,vertx));
 
-        Future.all(List.of(config, sessionFactoryFuture, cache))
+        Future.all(List.of(config, clientFuture, cache))
                 .map(v -> {
-                    sessionFactory = sessionFactoryFuture.result();
-                    return new BaseModule(config.result(), sessionFactoryFuture.result(), new ObjectMapper(), vertx, cache.result());
+                    client = clientFuture.result();
+                    return new BaseModule(config.result(), new ObjectMapper(), vertx, client, cache.result());
                 })
-                .map(this::runAuthHandler)
+                .map(this::runAuthEventListener)
                 .flatMap(this::runHttpServer)
                 .onSuccess(result -> startPromise.complete())
                 .onFailure(startPromise::fail);
 
     }
 
-    private Future<Mutiny.SessionFactory> connectSessionFactory(Configuration config) {
-        return vertx.executeBlocking(() -> {
-            try {
-                log.info("Loading Hibernate-Reactive");
-                var factory = HibernateUtils.getEntityManagerFactory(config).unwrap(Mutiny.SessionFactory.class);
-                log.info("Hibernate-Reactive is ready");
-                return factory;
-            } catch (Exception e) {
-                throw new BizException(ErrorType.Inner.Init, "Hibernate Reactive is failed", e);
-            }
-        });
+    private SqlClient connectSqlClient(Configuration config, Vertx vertx) {
+        var db = config.database();
+        PgConnectOptions connectOptions = new PgConnectOptions()
+                .setPort(db.port())
+                .setHost(db.host())
+                .setDatabase(db.database())
+                .setUser(db.user())
+                .setPassword(db.password());
+
+        PoolOptions poolOptions = new PoolOptions()
+                .setMaxSize(db.connection().poolSize());
+
+        return PgBuilder
+                .client()
+                .with(poolOptions)
+                .connectingTo(connectOptions)
+                .using(vertx)
+                .build();
     }
 
-    private BaseModule runAuthHandler(BaseModule baseModule) {
-        final Rbac rbac = new Rbac(baseModule.getSessionFactory());
+    private BaseModule runAuthEventListener(BaseModule baseModule) {
+        final Rbac rbac = new Rbac(baseModule.getSqlClient());
         var objectMapper = baseModule.getObjectMapper();
         vertx.eventBus().consumer("auth_rbac", EventMessageHandler.wrap(json -> {
             try {
@@ -143,12 +148,11 @@ public class CoreVerticle extends AbstractVerticle {
         server.close().onSuccess(f -> {
             log.info("Http server stopped");
         }).flatMap(v -> {
-            return vertx.<Void>executeBlocking(() -> {
-                sessionFactory.close();
-                log.info("Service stopped");
-                stopPromise.complete();
-                return null;
-            });
+            return client.close();
+        }).flatMap(v -> {
+            log.info("Service stopped");
+            stopPromise.complete();
+            return null;
         }).onFailure(stopPromise::fail);
     }
 

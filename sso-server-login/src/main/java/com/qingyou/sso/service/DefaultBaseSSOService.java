@@ -22,7 +22,7 @@ public class DefaultBaseSSOService implements BaseSSOService {
             var words = PasswordEncodeUtils.encode(password, account.getSalt());
             if (!words.encoded().equals(account.getPassword()))
                 throw new BizException(ErrorType.Inner.Login, "Password incorrect");
-            return userRepository.findById(account.getUserId(), User.class);
+            return userRepository.findById(account.getUserId());
         }).map(user -> {
             if (user == null) throw new BizException(ErrorType.Inner.Login, "User not found");
             return new LoginResult(user.getId(), user.getName());
@@ -37,7 +37,7 @@ public class DefaultBaseSSOService implements BaseSSOService {
     @Override
     public Future<LoginResult> userinfo(Long userId) {
         if (userId == null) throw new BizException(ErrorType.Inner.Login, "User already logged out");
-        return userRepository.findById(userId, User.class).map(user -> {
+        return userRepository.findById(userId).map(user -> {
             if (user == null) throw new BizException(ErrorType.Inner.Login, "User not found");
             return new LoginResult(user.getId(), user.getName());
         });

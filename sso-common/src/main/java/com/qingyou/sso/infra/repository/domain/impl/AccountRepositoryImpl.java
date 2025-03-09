@@ -1,24 +1,39 @@
 package com.qingyou.sso.infra.repository.domain.impl;
 
 import com.qingyou.sso.domain.user.Account;
-import com.qingyou.sso.infra.repository.base.BaseRepositoryImpl;
 import com.qingyou.sso.infra.repository.domain.AccountRepository;
-import com.qingyou.sso.utils.UniConvertUtils;
+import io.vertx.codegen.annotations.Nullable;
 import io.vertx.core.Future;
-import org.hibernate.reactive.common.Identifier;
-import org.hibernate.reactive.mutiny.Mutiny;
+import io.vertx.sqlclient.Row;
+import io.vertx.sqlclient.SqlClient;
+import io.vertx.sqlclient.Tuple;
+import lombok.AllArgsConstructor;
 
-public class AccountRepositoryImpl extends BaseRepositoryImpl<Account> implements AccountRepository {
+@AllArgsConstructor
+public class AccountRepositoryImpl implements AccountRepository {
+    private final SqlClient client;
 
-    public AccountRepositoryImpl(Mutiny.SessionFactory sessionFactory) {
-        super(sessionFactory);
-    }
 
     @Override
     public Future<Account> findByUsername(String username) {
-        return sessionFactory.withSession(session ->
-                session.find(Account.class, Identifier.id("username", username))
-        ).convert().with(UniConvertUtils::toFuture);
+        return client.preparedQuery("SELECT (user_id,username,password,salt) FROM sso_user.account WHERE username = ?")
+                .execute(Tuple.of(username))
+                .map(rows -> {
+                    for (Row row : rows) {
+                        Account account = new Account();
+                        account.setUserId(row.getLong("user_id"));
+                        account.setUsername(username);
+                        account.setPassword(row.getString("password"));
+                        account.setSalt(row.getString("salt"));
+                    }
+                    return null;
+                });
     }
 
+    @Override
+    public Future<@Nullable Account> insert(Account account) {
+        return client.preparedQuery("INSERT INTO sso_user.account(user_id,username,password,salt) VALUES (?, ?, ?, ?)")
+                .execute(Tuple.of(account.getUserId(),account.getUsername(),account.getPassword(),account.getSalt()))
+                .map(rows -> account);
+    }
 }

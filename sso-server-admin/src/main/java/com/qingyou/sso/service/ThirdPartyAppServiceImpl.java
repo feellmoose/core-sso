@@ -36,7 +36,7 @@ public class ThirdPartyAppServiceImpl implements ThirdPartyAppService {
         app.setAppName(name);
         app.setClientId(UUID.randomUUID().toString());
         app.setClientSecret(Base64.getEncoder().encodeToString(bytes));
-        return thirdPartyRepository.persist(app).map(v ->
+        return thirdPartyRepository.insert(app).map(v ->
                 new ThirdPartyAppResult(app.getAppName(),app.getClientId(),app.getClientSecret(), Collections.emptyList(), Collections.emptyList())
         );
     }
@@ -55,7 +55,7 @@ public class ThirdPartyAppServiceImpl implements ThirdPartyAppService {
                     }).toList();
                     return thirdPartyRequiredUserInfoRepository
                             .refreshByThirdPartyApp(app,thirdPartyRequiredUserInfos)
-                            .flatMap(v -> thirdPartyRepository.findById(app.getId(), ThirdPartyApp.class));
+                            .flatMap(v -> thirdPartyRepository.findById(app.getId()));
                 }).map(app -> new ThirdPartyAppResult(
                         app.getAppName(),
                         app.getClientId(),
@@ -93,7 +93,7 @@ public class ThirdPartyAppServiceImpl implements ThirdPartyAppService {
                             }).toList();
                     return thirdPartyRedirectRepository
                             .refreshByThirdPartyApp(app, redirects)
-                            .flatMap(v -> thirdPartyRepository.findById(app.getId(), ThirdPartyApp.class));
+                            .flatMap(v -> thirdPartyRepository.findById(app.getId()));
                 }).map(app -> new ThirdPartyAppResult(
                         app.getAppName(),
                         app.getClientId(),

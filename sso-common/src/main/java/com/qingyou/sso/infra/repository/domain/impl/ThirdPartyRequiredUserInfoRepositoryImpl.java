@@ -1,36 +1,73 @@
 package com.qingyou.sso.infra.repository.domain.impl;
 
+import com.qingyou.sso.api.constants.DataType;
+import com.qingyou.sso.api.constants.PlatformType;
 import com.qingyou.sso.domain.oauth.ThirdPartyApp;
 import com.qingyou.sso.domain.oauth.ThirdPartyRequiredUserInfo;
-import com.qingyou.sso.infra.repository.base.BaseRepositoryImpl;
 import com.qingyou.sso.infra.repository.domain.ThirdPartyRequiredUserInfoRepository;
-import com.qingyou.sso.utils.UniConvertUtils;
+import io.vertx.codegen.annotations.Nullable;
 import io.vertx.core.Future;
-import org.hibernate.reactive.mutiny.Mutiny;
+import io.vertx.sqlclient.Row;
+import io.vertx.sqlclient.SqlClient;
+import io.vertx.sqlclient.Tuple;
+import lombok.AllArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class ThirdPartyRequiredUserInfoRepositoryImpl extends BaseRepositoryImpl<ThirdPartyRequiredUserInfo> implements ThirdPartyRequiredUserInfoRepository {
-    public ThirdPartyRequiredUserInfoRepositoryImpl(Mutiny.SessionFactory sessionFactory) {
-        super(sessionFactory);
-    }
+@AllArgsConstructor
+public class ThirdPartyRequiredUserInfoRepositoryImpl implements ThirdPartyRequiredUserInfoRepository {
+    private final SqlClient client;
 
     @Override
     public Future<List<ThirdPartyRequiredUserInfo>> findByThirdPartyApp(ThirdPartyApp thirdPartyApp) {
-        return sessionFactory.withSession(session -> {
-            return session.createQuery("from ThirdPartyRequiredUserInfo where thirdPartyApp = :thirdPartyApp", ThirdPartyRequiredUserInfo.class)
-                    .setParameter("thirdPartyApp",thirdPartyApp)
-                    .getResultList();
-        }).convert().with(UniConvertUtils::toFuture);
+        return client.preparedQuery("SELECT (id,data_type,platform_type) FROM sso_oauth.third_party_required_user_info WHERE third_party_app_id = ?")
+                .execute(Tuple.of(thirdPartyApp.getId()))
+                .map(rows -> {
+                    List<ThirdPartyRequiredUserInfo> infos = new ArrayList<>();
+                    for (Row row : rows) {
+                        ThirdPartyRequiredUserInfo info = new ThirdPartyRequiredUserInfo();
+                        info.setThirdPartyApp(thirdPartyApp);
+                        info.setId(row.getLong("id"));
+                        info.setDataType(DataType.values()[row.getInteger("data_type")]);
+                        info.setPlatformType(PlatformType.values()[row.getInteger("platform_type")]);
+                    }
+                    return infos;
+                });
     }
 
     @Override
     public Future<Void> refreshByThirdPartyApp(ThirdPartyApp thirdPartyApp, Collection<ThirdPartyRequiredUserInfo> collection) {
-        return sessionFactory.withSession(session -> {
-            return session.removeAll(thirdPartyApp.getRequiredUserInfos().toArray())
-                    .chain(thirdPartyRedirects -> session.mergeAll(collection.toArray()))
-                    .chain(session::flush);
-        }).convert().with(UniConvertUtils::toFuture);
+        return client.preparedQuery("DELETE FROM sso_oauth.third_party_required_user_info WHERE third_party_app_id = ?")
+                .execute(Tuple.of(thirdPartyApp.getId())).flatMap(rows -> {
+                    return client.preparedQuery("INSERT INTO sso_oauth.third_party_required_user_info(data_type,platform_type,third_party_app_id) VALUES (?,?,?) RETURNING id")
+                            .executeBatch(collection.stream()
+                                    .map(info -> Tuple.of(info.getDataType().ordinal(),info.getPlatformType().ordinal(),info.getThirdPartyApp().getId()))
+                                    .toList())
+                            .map(r -> {
+                                var i = r.iterator();
+                                for(var info: collection){
+                                    if (i.hasNext()){
+                                        info.setId(i.next().getLong("id"));
+                                    }
+                                }
+                                return null;
+                            });
+                }).mapEmpty();
     }
+
+    @Override
+    public Future<@Nullable ThirdPartyRequiredUserInfo> insert(ThirdPartyRequiredUserInfo info) {
+        return client.preparedQuery("INSERT INTO sso_oauth.third_party_required_user_info(data_type,platform_type,third_party_app_id) VALUES (?,?,?) RETURNING id")
+                .execute(Tuple.of(info.getDataType().ordinal(),info.getPlatformType().ordinal(),info.getThirdPartyApp().getId()))
+                .map(rows -> {
+                    for(Row row: rows){
+                        info.setId(row.getLong("id"));
+                    }
+                    return info;
+                });
+    }
+
+
 }
