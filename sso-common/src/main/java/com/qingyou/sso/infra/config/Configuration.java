@@ -1,9 +1,6 @@
 package com.qingyou.sso.infra.config;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import io.vertx.core.json.JsonObject;
-
-import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record Configuration(
@@ -15,11 +12,8 @@ public record Configuration(
     public record Server(String host, int port) {
     }
 
-    public record Database(String url, String user, String password, Connection connection, Hibernate hibernate) {
+    public record Database(String host, int port, String database, String user, String password, Connection connection) {
         public record Connection(int poolSize) {
-        }
-
-        public record Hibernate(boolean showSql, String action) {
         }
     }
 

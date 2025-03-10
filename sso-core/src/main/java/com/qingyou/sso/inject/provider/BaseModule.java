@@ -16,18 +16,19 @@ import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.sstore.ClusteredSessionStore;
 import io.vertx.ext.web.sstore.LocalSessionStore;
 import io.vertx.ext.web.sstore.SessionStore;
+import io.vertx.sqlclient.SqlClient;
 import jakarta.inject.Singleton;
-import org.hibernate.reactive.mutiny.Mutiny;
 
 
 @Module
 public class BaseModule extends BaseDependency {
 
-    public BaseModule(Configuration configuration, Mutiny.SessionFactory sessionFactory, ObjectMapper objectMapper, Vertx vertx, Cache cache) {
+    public BaseModule(Configuration configuration, ObjectMapper objectMapper, Vertx vertx, SqlClient sqlClient, Cache cache) {
         this.configuration = configuration;
-        this.sessionFactory = sessionFactory;
         this.objectMapper = objectMapper;
         this.vertx = vertx;
+        this.cache = cache;
+        this.sqlClient = sqlClient;
     }
 
     @Provides
@@ -39,14 +40,14 @@ public class BaseModule extends BaseDependency {
 
     @Provides
     @Singleton
-    public Configuration configuration() {
-        return configuration;
+    public SqlClient sqlClient() {
+        return sqlClient;
     }
 
     @Provides
     @Singleton
-    public Mutiny.SessionFactory sessionFactory() {
-        return sessionFactory;
+    public Configuration configuration() {
+        return configuration;
     }
 
     @Provides

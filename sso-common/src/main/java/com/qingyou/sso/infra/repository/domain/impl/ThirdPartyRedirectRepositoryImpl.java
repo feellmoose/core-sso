@@ -2,37 +2,70 @@ package com.qingyou.sso.infra.repository.domain.impl;
 
 import com.qingyou.sso.domain.oauth.ThirdPartyApp;
 import com.qingyou.sso.domain.oauth.ThirdPartyRedirect;
-import com.qingyou.sso.infra.repository.base.BaseRepositoryImpl;
 import com.qingyou.sso.infra.repository.domain.ThirdPartyRedirectRepository;
-import com.qingyou.sso.utils.UniConvertUtils;
+import io.vertx.codegen.annotations.Nullable;
 import io.vertx.core.Future;
-import org.hibernate.reactive.mutiny.Mutiny;
+import io.vertx.sqlclient.Row;
+import io.vertx.sqlclient.SqlClient;
+import io.vertx.sqlclient.Tuple;
+import lombok.AllArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class ThirdPartyRedirectRepositoryImpl extends BaseRepositoryImpl<ThirdPartyRedirect> implements ThirdPartyRedirectRepository {
+@AllArgsConstructor
+public class ThirdPartyRedirectRepositoryImpl implements ThirdPartyRedirectRepository {
 
-    public ThirdPartyRedirectRepositoryImpl(Mutiny.SessionFactory sessionFactory) {
-        super(sessionFactory);
-    }
+    private final SqlClient client;
 
     @Override
     public Future<List<ThirdPartyRedirect>> findByThirdPartyApp(ThirdPartyApp thirdPartyApp) {
-        return sessionFactory.withSession(session -> {
-            return session.createQuery("from ThirdPartyRedirect where thirdPartyApp = :thirdPartyApp", ThirdPartyRedirect.class)
-                    .setParameter("thirdPartyApp",thirdPartyApp)
-                    .getResultList();
-        }).convert().with(UniConvertUtils::toFuture);
+        return client.preparedQuery("SELECT id,uri FROM sso_oauth.third_party_redirect WHERE third_party_app_id = $1")
+                .execute(Tuple.of(thirdPartyApp.getId()))
+                .map(rows -> {
+                    List<ThirdPartyRedirect> thirdPartyRedirects = new ArrayList<>();
+                    for (Row row : rows) {
+                        ThirdPartyRedirect redirect = new ThirdPartyRedirect();
+                        redirect.setThirdPartyApp(thirdPartyApp);
+                        redirect.setId(row.getLong("id"));
+                        redirect.setURI(row.getString("uri"));
+                        thirdPartyRedirects.add(redirect);
+                    }
+                    return thirdPartyRedirects;
+                });
     }
 
     @Override
     public Future<Void> refreshByThirdPartyApp(ThirdPartyApp thirdPartyApp, Collection<ThirdPartyRedirect> collection) {
-        return sessionFactory.withSession(session -> {
-            return session.removeAll(thirdPartyApp.getRedirectURIs().toArray())
-                    .chain(thirdPartyRedirects -> session.mergeAll(collection.toArray()))
-                    .chain(session::flush);
-        }).convert().with(UniConvertUtils::toFuture);
+        return client.preparedQuery("DELETE FROM sso_oauth.third_party_redirect WHERE third_party_app_id = $1")
+                .execute(Tuple.of(thirdPartyApp.getId())).flatMap(rows -> {
+                    return client.preparedQuery("INSERT INTO sso_oauth.third_party_redirect(uri,third_party_app_id) VALUES ($1, $2, ) RETURNING id")
+                            .executeBatch(collection.stream()
+                                    .map(thirdPartyRedirect -> Tuple.of(thirdPartyRedirect.getURI(),thirdPartyRedirect.getThirdPartyApp().getId()))
+                                    .toList())
+                            .map(r -> {
+                                var i = r.iterator();
+                                for(var thirdPartyRedirect: collection){
+                                    if (i.hasNext()){
+                                        thirdPartyRedirect.setId(i.next().getLong("id"));
+                                    }
+                                }
+                                return null;
+                            });
+                }).mapEmpty();
+    }
+
+    @Override
+    public Future<@Nullable ThirdPartyRedirect> insert(ThirdPartyRedirect thirdPartyRedirect) {
+        return client.preparedQuery("INSERT INTO sso_oauth.third_party_redirect(id,uri,third_party_app_id) VALUES ($1, $2, $3) RETURNING id")
+                .execute(Tuple.of(thirdPartyRedirect.getId(),thirdPartyRedirect.getURI(),thirdPartyRedirect.getThirdPartyApp().getId()))
+                        .map(rows -> {
+                            for(Row row: rows){
+                                thirdPartyRedirect.setId(row.getLong("id"));
+                            }
+                            return thirdPartyRedirect;
+                        });
     }
 
 }

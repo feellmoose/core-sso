@@ -33,7 +33,7 @@ public class AuthHandler implements Handler<RoutingContext> {
             GlobalHttpResponse.fail(routingContext, new BizException(ErrorType.Showed.Auth, "Login required"), log);
             return;
         }
-        userRepository.findById(userId, User.class)
+        userRepository.findById(userId)
             .flatMap(user -> {
                 if (user == null) throw new BizException(ErrorType.Showed.Auth,"User not exist");
                 return authService.rbac(Action.required(new RbacUserInfo(user.getId(), user.getName()), new TargetInfo(0L,action,object))).map(result -> {

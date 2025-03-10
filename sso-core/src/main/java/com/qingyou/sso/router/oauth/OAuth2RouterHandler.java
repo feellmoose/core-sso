@@ -21,9 +21,11 @@ public class OAuth2RouterHandler implements Handler<Router> {
     @Override
     public void handle(Router router) {
         router.get("/oauth/authorize").handler(OAuth2ParamHandler.authorization()::inject).handler(oauth2Handler::authorize);
-        router.get("/oauth/token").handler(OAuth2ParamHandler.token()::inject).handler(oauth2Handler::token);
+
+        router.post("/oauth/token").handler(BodyHandler.create()).handler(OAuth2ParamHandler.token()::inject).handler(oauth2Handler::token);
+
         router.get("/oauth/info").handler(OAuth2ParamHandler.info()::inject).handler(oauth2Handler::info);
-        router.get("/oauth/verify").handler(OAuth2ParamHandler.verify()::inject).handler(oauth2Handler::verify);
+
         router.get("/oauth/refresh").handler(OAuth2ParamHandler.refresh()::inject).handler(oauth2Handler::refresh);
 
         router.post("/oauth/password").handler(BodyHandler.create()).handler(OAuth2ParamHandler.password()::inject).handler(oauth2Handler::password);

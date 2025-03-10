@@ -47,18 +47,12 @@
 
     <dependencies>
 
+        <!-- log -->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>${slf4j.version}</version>
         </dependency>
-
-        <dependency>
-            <groupId>com.auth0</groupId>
-            <artifactId>java-jwt</artifactId>
-            <version>4.4.0</version>
-        </dependency>
-
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
@@ -66,23 +60,23 @@
         </dependency>
 
         <dependency>
-            <groupId>com.fasterxml.jackson.dataformat</groupId>
-            <artifactId>jackson-dataformat-toml</artifactId>
-            <version>2.18.0</version>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+
+        <!-- jwt support -->
+        <dependency>
+            <groupId>com.auth0</groupId>
+            <artifactId>java-jwt</artifactId>
+            <version>4.4.0</version>
         </dependency>
 
         <dependency>
-            <groupId>org.hibernate.reactive</groupId>
-            <artifactId>hibernate-reactive-core</artifactId>
-            <version>2.4.2.Final</version>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-codegen</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>io.smallrye.reactive</groupId>
-            <artifactId>smallrye-mutiny-vertx-core</artifactId>
-            <version>3.13.1</version>
-        </dependency>
-
+        <!-- web -->
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-web-client</artifactId>
@@ -92,7 +86,7 @@
             <artifactId>vertx-web</artifactId>
         </dependency>
 
-        <!-- plugin-->
+        <!-- pg-->
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-pg-client</artifactId>
@@ -103,21 +97,25 @@
             <version>2.1</version>
         </dependency>
 
+        <!-- mail -->
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-mail-client</artifactId>
         </dependency>
 
+        <!-- oauth2 -->
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-auth-oauth2</artifactId>
+        </dependency>
+
+        <!-- config -->
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-config</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>io.vertx</groupId>
-            <artifactId>vertx-hazelcast</artifactId>
-        </dependency>
-
+        <!-- test -->
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-junit5</artifactId>

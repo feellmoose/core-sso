@@ -1,44 +1,96 @@
 package com.qingyou.sso.infra.repository.domain.impl;
 
 import com.qingyou.sso.domain.user.User;
-import com.qingyou.sso.infra.repository.base.BaseRepositoryImpl;
 import com.qingyou.sso.infra.repository.domain.UserRepository;
-import com.qingyou.sso.utils.UniConvertUtils;
 import io.vertx.codegen.annotations.Nullable;
 import io.vertx.core.Future;
-import org.hibernate.reactive.mutiny.Mutiny;
+import io.vertx.sqlclient.Row;
+import io.vertx.sqlclient.SqlClient;
+import io.vertx.sqlclient.Tuple;
+import lombok.AllArgsConstructor;
 
 
-public class UserRepositoryImpl extends BaseRepositoryImpl<User> implements UserRepository {
+@AllArgsConstructor
+public class UserRepositoryImpl implements UserRepository {
+    private SqlClient client;
 
-    public UserRepositoryImpl(Mutiny.SessionFactory sessionFactory) {
-        super(sessionFactory);
+    @Override
+    public Future<@Nullable User> findById(Object id) {
+        return client.preparedQuery("SELECT id,name,email,phone FROM sso_user.user WHERE id = $1")
+                .execute(Tuple.of(id))
+                .map(rows -> {
+                    for (Row row : rows) {
+                        User user = new User();
+                        user.setId(row.getLong("id"));
+                        user.setName(row.getString("name"));
+                        user.setEmail(row.getString("email"));
+                        user.setPhone(row.getString("phone"));
+                        return user;
+                    }
+                    return null;
+                });
     }
 
     @Override
-    public Future<@Nullable User> findByUsername(String username) {
-        return sessionFactory.withSession(session ->
-                session.createQuery("from User where User.account.username= :username", User.class)
-                        .setParameter("username", username)
-                        .getSingleResultOrNull()
-        ).convert().with(UniConvertUtils::toFuture);
+    public Future<User> findByUsername(String username) {
+        return client.preparedQuery("SELECT id,name,email,phone FROM sso_user.user WHERE id IN (SELECT user_id FROM sso_user.account WHERE username = $1)")
+                .execute(Tuple.of(username))
+                .map(rows -> {
+                    for (Row row : rows) {
+                        User user = new User();
+                        user.setId(row.getLong("id"));
+                        user.setName(row.getString("name"));
+                        user.setEmail(row.getString("email"));
+                        user.setPhone(row.getString("phone"));
+                        return user;
+                    }
+                    return null;
+                });
     }
 
     @Override
     public Future<@Nullable User> findByEmail(String email) {
-        return sessionFactory.withSession(session ->
-                session.createQuery("from User where User.email= :email", User.class)
-                        .setParameter("email", email)
-                        .getSingleResultOrNull()
-        ).convert().with(UniConvertUtils::toFuture);
+        return client.preparedQuery("SELECT id,name,email,phone FROM sso_user.user WHERE email = $1")
+                .execute(Tuple.of(email))
+                .map(rows -> {
+                    for (Row row : rows) {
+                        User user = new User();
+                        user.setId(row.getLong("id"));
+                        user.setName(row.getString("name"));
+                        user.setEmail(row.getString("email"));
+                        user.setPhone(row.getString("phone"));
+                        return user;
+                    }
+                    return null;
+                });
     }
 
     @Override
     public Future<@Nullable User> findByPhone(String phone) {
-        return sessionFactory.withSession(session ->
-                session.createQuery("from User where User.phone= :phone", User.class)
-                        .setParameter("phone", phone)
-                        .getSingleResultOrNull()
-        ).convert().with(UniConvertUtils::toFuture);
+        return client.preparedQuery("SELECT id,name,email,phone FROM sso_user.user WHERE phone = $1")
+                .execute(Tuple.of(phone))
+                .map(rows -> {
+                    for (Row row : rows) {
+                        User user = new User();
+                        user.setId(row.getLong("id"));
+                        user.setName(row.getString("name"));
+                        user.setEmail(row.getString("email"));
+                        user.setPhone(row.getString("phone"));
+                        return user;
+                    }
+                    return null;
+                });
+    }
+
+    @Override
+    public Future<@Nullable User> insert(User user) {
+        return client.preparedQuery("INSERT INTO sso_user.user(name,email,phone) VALUES ($1, $2, $3) RETURNING id")
+                .execute(Tuple.of(user.getName(),user.getEmail(),user.getPhone()))
+                .map(rows -> {
+                    for (Row row : rows) {
+                        user.setId(row.getLong("id"));
+                    }
+                    return user;
+                });
     }
 }

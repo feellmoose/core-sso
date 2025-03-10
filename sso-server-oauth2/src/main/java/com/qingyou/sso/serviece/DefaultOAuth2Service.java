@@ -83,7 +83,7 @@ public class DefaultOAuth2Service implements OAuth2Service {
             for (String s : scopes) {
                 //Require other permissions; Go for rbac system and verifying, and do not return any userInfos.
                 String[] action = s.split(":");
-                System.out.println(Arrays.stream(action).toList());
+
                 if (action.length != 2) throw new BizException(ErrorType.Showed.Params, "Scope not match");
                 if (action[0].equals("info")) infos.add(action);
                 else rbac.add(action);
@@ -187,7 +187,7 @@ public class DefaultOAuth2Service implements OAuth2Service {
         return thirdPartyRepository.findByClientId(authorization.clientId()).flatMap(app -> {
             if (app == null)
                 throw new BizException(ErrorType.OAuth2.INVALID_CLIENT, "App not exists");
-            if (app.getRedirectURIs().stream().noneMatch(redirect -> redirect.getURI().equals(authorization.redirectURI())))
+            if (app.getRequiredUserInfos() != null && app.getRedirectURIs().stream().noneMatch(redirect -> redirect.getURI().equals(authorization.redirectURI())))
                 throw new BizException(ErrorType.OAuth2.INVALID_REDIRECT_URI, "URI not matched");
             AuthCache auth = new AuthCache(userId,authorization.clientId(),authorization.redirectURI(),authorization.codeChallenge(),authorization.scope());
             return cache.set("auth_code:" + code, auth, codeExpireTime);
@@ -226,7 +226,7 @@ public class DefaultOAuth2Service implements OAuth2Service {
             String scope = auth.result().scope();
             Long userId = auth.result().user();
 
-            return userRepository.findById(userId, User.class).flatMap(user -> {
+            return userRepository.findById(userId).flatMap(user -> {
                 return verifyScope(user, app, scope);
             }).map(v -> {
                 String accessToken = JWT.create().withSubject(userId.toString())
@@ -254,7 +254,7 @@ public class DefaultOAuth2Service implements OAuth2Service {
                 throw new BizException(ErrorType.OAuth2.UNAUTHORIZED_CLIENT, "App not exists");
             if (app.getRedirectURIs().stream().noneMatch(redirect -> redirect.getURI().equals(authorization.redirectURI())))
                 throw new BizException(ErrorType.OAuth2.INVALID_REDIRECT_URI, "URI not matched");
-            return userRepository.findById(userId, User.class).flatMap(user -> {
+            return userRepository.findById(userId).flatMap(user -> {
                 return verifyScope(user, app, authorization.scope());
             }).map(v -> {
                 String accessToken = JWT.create().withSubject(userId.toString())
@@ -294,7 +294,7 @@ public class DefaultOAuth2Service implements OAuth2Service {
                 throw new BizException(ErrorType.OAuth2.ACCESS_DENIED, "App not exists");
             if (!refresh.clientSecret().equals(app.getClientSecret()))
                 throw new BizException(ErrorType.OAuth2.ACCESS_DENIED, "Client secret not match");
-            return userRepository.findById(userId, User.class).flatMap(user -> {
+            return userRepository.findById(userId).flatMap(user -> {
                 return verifyScope(user, app, scope);
             }).map(v -> {
                 String genAccessToken = JWT.create().withSubject(Long.toString(userId))
@@ -333,7 +333,7 @@ public class DefaultOAuth2Service implements OAuth2Service {
         if (!decodedJWT.getClaim("grant_type").isMissing())
             throw new BizException(ErrorType.OAuth2.INVALID_REQUEST, "Access token not match");
 
-        return userRepository.findById(userId, User.class).flatMap(user ->
+        return userRepository.findById(userId).flatMap(user ->
                 thirdPartyRepository.findByClientId(client).flatMap(app ->
                         verifyScopeWithUserInfo(user, app, scope)
                 )

@@ -69,7 +69,7 @@ public class DefaultEmailSSOService implements EmailSSOService {
                     User register = new User();
                     register.setEmail(email);
                     register.setName(email);
-                    return userRepository.merge(register);
+                    return userRepository.insert(register);
                 }).map(user ->  new LoginResult(user.getId(),user.getName()));
             }
         });
@@ -77,7 +77,7 @@ public class DefaultEmailSSOService implements EmailSSOService {
 
     @Override
     public Future<LoginResult> setAccount(UsernamePassword usernamePassword, Long userId) {
-        return userRepository.findById(userId, User.class).flatMap(user -> {
+        return userRepository.findById(userId).flatMap(user -> {
             if (user == null) throw new BizException(ErrorType.Showed.Auth,"Please register first");
             if (user.getEmail() == null) throw new BizException(ErrorType.Showed.Auth,"Only email register can use this api");
             if (user.getAccount() != null) throw new BizException(ErrorType.Showed.Auth,"Account already exists");
@@ -91,7 +91,7 @@ public class DefaultEmailSSOService implements EmailSSOService {
                         usernamePassword.username() == null? user.getEmail() : usernamePassword.username(),
                         encoded.encoded(),encoded.salt(),
                         user);
-                return accountRepository.merge(account).map(user);
+                return accountRepository.insert(account).map(user);
             });
         }).map(user -> new LoginResult(user.getId(),user.getName()));
     }
