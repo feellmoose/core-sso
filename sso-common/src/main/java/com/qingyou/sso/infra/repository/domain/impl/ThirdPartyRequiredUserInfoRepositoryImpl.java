@@ -22,7 +22,7 @@ public class ThirdPartyRequiredUserInfoRepositoryImpl implements ThirdPartyRequi
 
     @Override
     public Future<List<ThirdPartyRequiredUserInfo>> findByThirdPartyApp(ThirdPartyApp thirdPartyApp) {
-        return client.preparedQuery("SELECT (id,data_type,platform_type) FROM sso_oauth.third_party_required_user_info WHERE third_party_app_id = ?")
+        return client.preparedQuery("SELECT id,data_type,platform_type FROM sso_oauth.third_party_required_user_info WHERE third_party_app_id = $1")
                 .execute(Tuple.of(thirdPartyApp.getId()))
                 .map(rows -> {
                     List<ThirdPartyRequiredUserInfo> infos = new ArrayList<>();
@@ -39,9 +39,9 @@ public class ThirdPartyRequiredUserInfoRepositoryImpl implements ThirdPartyRequi
 
     @Override
     public Future<Void> refreshByThirdPartyApp(ThirdPartyApp thirdPartyApp, Collection<ThirdPartyRequiredUserInfo> collection) {
-        return client.preparedQuery("DELETE FROM sso_oauth.third_party_required_user_info WHERE third_party_app_id = ?")
+        return client.preparedQuery("DELETE FROM sso_oauth.third_party_required_user_info WHERE third_party_app_id = $1")
                 .execute(Tuple.of(thirdPartyApp.getId())).flatMap(rows -> {
-                    return client.preparedQuery("INSERT INTO sso_oauth.third_party_required_user_info(data_type,platform_type,third_party_app_id) VALUES (?,?,?) RETURNING id")
+                    return client.preparedQuery("INSERT INTO sso_oauth.third_party_required_user_info(data_type,platform_type,third_party_app_id) VALUES ($1, $2, $3) RETURNING id")
                             .executeBatch(collection.stream()
                                     .map(info -> Tuple.of(info.getDataType().ordinal(),info.getPlatformType().ordinal(),info.getThirdPartyApp().getId()))
                                     .toList())
@@ -59,7 +59,7 @@ public class ThirdPartyRequiredUserInfoRepositoryImpl implements ThirdPartyRequi
 
     @Override
     public Future<@Nullable ThirdPartyRequiredUserInfo> insert(ThirdPartyRequiredUserInfo info) {
-        return client.preparedQuery("INSERT INTO sso_oauth.third_party_required_user_info(data_type,platform_type,third_party_app_id) VALUES (?,?,?) RETURNING id")
+        return client.preparedQuery("INSERT INTO sso_oauth.third_party_required_user_info(data_type,platform_type,third_party_app_id) VALUES ($1, $2, $3) RETURNING id")
                 .execute(Tuple.of(info.getDataType().ordinal(),info.getPlatformType().ordinal(),info.getThirdPartyApp().getId()))
                 .map(rows -> {
                     for(Row row: rows){

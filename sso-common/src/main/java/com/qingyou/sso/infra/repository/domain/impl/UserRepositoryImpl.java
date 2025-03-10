@@ -16,7 +16,7 @@ public class UserRepositoryImpl implements UserRepository {
 
     @Override
     public Future<@Nullable User> findById(Object id) {
-        return client.preparedQuery("SELECT (id,name,email,phone) FROM sso_user.user WHERE id = ?")
+        return client.preparedQuery("SELECT id,name,email,phone FROM sso_user.user WHERE id = $1")
                 .execute(Tuple.of(id))
                 .map(rows -> {
                     for (Row row : rows) {
@@ -33,7 +33,7 @@ public class UserRepositoryImpl implements UserRepository {
 
     @Override
     public Future<User> findByUsername(String username) {
-        return client.preparedQuery("SELECT (id,name,email,phone) FROM sso_user.user WHERE id in (SELECT user_id FROM sso_user.account WHERE username = ?)")
+        return client.preparedQuery("SELECT id,name,email,phone FROM sso_user.user WHERE id IN (SELECT user_id FROM sso_user.account WHERE username = $1)")
                 .execute(Tuple.of(username))
                 .map(rows -> {
                     for (Row row : rows) {
@@ -50,7 +50,7 @@ public class UserRepositoryImpl implements UserRepository {
 
     @Override
     public Future<@Nullable User> findByEmail(String email) {
-        return client.preparedQuery("SELECT (id,name,email,phone) FROM sso_user.user WHERE email = ?")
+        return client.preparedQuery("SELECT id,name,email,phone FROM sso_user.user WHERE email = $1")
                 .execute(Tuple.of(email))
                 .map(rows -> {
                     for (Row row : rows) {
@@ -67,7 +67,7 @@ public class UserRepositoryImpl implements UserRepository {
 
     @Override
     public Future<@Nullable User> findByPhone(String phone) {
-        return client.preparedQuery("SELECT (id,name,email,phone) FROM sso_user.user WHERE phone = ?")
+        return client.preparedQuery("SELECT id,name,email,phone FROM sso_user.user WHERE phone = $1")
                 .execute(Tuple.of(phone))
                 .map(rows -> {
                     for (Row row : rows) {
@@ -84,7 +84,7 @@ public class UserRepositoryImpl implements UserRepository {
 
     @Override
     public Future<@Nullable User> insert(User user) {
-        return client.preparedQuery("INSERT INTO sso_user.user(name,email,phone) VALUES (?, ?, ?) RETURNING id")
+        return client.preparedQuery("INSERT INTO sso_user.user(name,email,phone) VALUES ($1, $2, $3) RETURNING id")
                 .execute(Tuple.of(user.getName(),user.getEmail(),user.getPhone()))
                 .map(rows -> {
                     for (Row row : rows) {

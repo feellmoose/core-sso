@@ -103,6 +103,12 @@
             <artifactId>vertx-mail-client</artifactId>
         </dependency>
 
+        <!-- oauth2 -->
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-auth-oauth2</artifactId>
+        </dependency>
+
         <!-- config -->
         <dependency>
             <groupId>io.vertx</groupId>

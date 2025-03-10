@@ -16,7 +16,7 @@ public class AccountRepositoryImpl implements AccountRepository {
 
     @Override
     public Future<Account> findByUsername(String username) {
-        return client.preparedQuery("SELECT (user_id,username,password,salt) FROM sso_user.account WHERE username = ?")
+        return client.preparedQuery("SELECT user_id,username,password,salt FROM sso_user.account WHERE username = $1")
                 .execute(Tuple.of(username))
                 .map(rows -> {
                     for (Row row : rows) {
@@ -25,6 +25,7 @@ public class AccountRepositoryImpl implements AccountRepository {
                         account.setUsername(username);
                         account.setPassword(row.getString("password"));
                         account.setSalt(row.getString("salt"));
+                        return account;
                     }
                     return null;
                 });
@@ -32,7 +33,7 @@ public class AccountRepositoryImpl implements AccountRepository {
 
     @Override
     public Future<@Nullable Account> insert(Account account) {
-        return client.preparedQuery("INSERT INTO sso_user.account(user_id,username,password,salt) VALUES (?, ?, ?, ?)")
+        return client.preparedQuery("INSERT INTO sso_user.account(user_id,username,password,salt) VALUES ($1, $2, $3, $4)")
                 .execute(Tuple.of(account.getUserId(),account.getUsername(),account.getPassword(),account.getSalt()))
                 .map(rows -> account);
     }

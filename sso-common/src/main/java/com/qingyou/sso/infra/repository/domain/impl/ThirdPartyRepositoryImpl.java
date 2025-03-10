@@ -16,7 +16,7 @@ public class ThirdPartyRepositoryImpl implements ThirdPartyRepository {
 
     @Override
     public Future<ThirdPartyApp> findById(Long id) {
-        return client.preparedQuery("SELECT (id,app_name,client_id,client_secret) FROM sso_oauth.third_party_app WHERE id = ?")
+        return client.preparedQuery("SELECT id,app_name,client_id,client_secret FROM sso_oauth.third_party_app WHERE id = $1")
                 .execute(Tuple.of(id))
                 .map(rows -> {
                     for (Row row: rows){
@@ -33,7 +33,7 @@ public class ThirdPartyRepositoryImpl implements ThirdPartyRepository {
 
     @Override
     public Future<ThirdPartyApp> findByClientId(String clientId) {
-        return client.preparedQuery("SELECT (id,app_name,client_id,client_secret) FROM sso_oauth.third_party_app WHERE client_id = ?")
+        return client.preparedQuery("SELECT id,app_name,client_id,client_secret FROM sso_oauth.third_party_app WHERE client_id = $1")
                 .execute(Tuple.of(clientId))
                 .map(rows -> {
                     for (Row row: rows){
@@ -50,7 +50,7 @@ public class ThirdPartyRepositoryImpl implements ThirdPartyRepository {
 
     @Override
     public Future<@Nullable ThirdPartyApp> insert(ThirdPartyApp app) {
-        return client.preparedQuery("INSERT INTO sso_oauth.third_party_app(app_name,client_id,client_secret) VALUES (?,?,?) RETURNING id")
+        return client.preparedQuery("INSERT INTO sso_oauth.third_party_app(app_name,client_id,client_secret) VALUES ($1, $2, $3) RETURNING id")
                 .execute(Tuple.of(app.getAppName(),app.getClientId(),app.getClientSecret()))
                 .map(rows -> {
                     for (Row row: rows){

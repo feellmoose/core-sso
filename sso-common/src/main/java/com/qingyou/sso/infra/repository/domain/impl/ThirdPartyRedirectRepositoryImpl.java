@@ -21,7 +21,7 @@ public class ThirdPartyRedirectRepositoryImpl implements ThirdPartyRedirectRepos
 
     @Override
     public Future<List<ThirdPartyRedirect>> findByThirdPartyApp(ThirdPartyApp thirdPartyApp) {
-        return client.preparedQuery("SELECT(id,uri) FROM sso_oauth.third_party_redirect WHERE third_party_app_id = ?")
+        return client.preparedQuery("SELECT id,uri FROM sso_oauth.third_party_redirect WHERE third_party_app_id = $1")
                 .execute(Tuple.of(thirdPartyApp.getId()))
                 .map(rows -> {
                     List<ThirdPartyRedirect> thirdPartyRedirects = new ArrayList<>();
@@ -38,9 +38,9 @@ public class ThirdPartyRedirectRepositoryImpl implements ThirdPartyRedirectRepos
 
     @Override
     public Future<Void> refreshByThirdPartyApp(ThirdPartyApp thirdPartyApp, Collection<ThirdPartyRedirect> collection) {
-        return client.preparedQuery("DELETE FROM sso_oauth.third_party_redirect WHERE third_party_app_id = ?")
+        return client.preparedQuery("DELETE FROM sso_oauth.third_party_redirect WHERE third_party_app_id = $1")
                 .execute(Tuple.of(thirdPartyApp.getId())).flatMap(rows -> {
-                    return client.preparedQuery("INSERT INTO sso_oauth.third_party_redirect(uri,third_party_app_id) VALUES (?,?) RETURNING id")
+                    return client.preparedQuery("INSERT INTO sso_oauth.third_party_redirect(uri,third_party_app_id) VALUES ($1, $2, ) RETURNING id")
                             .executeBatch(collection.stream()
                                     .map(thirdPartyRedirect -> Tuple.of(thirdPartyRedirect.getURI(),thirdPartyRedirect.getThirdPartyApp().getId()))
                                     .toList())
@@ -58,7 +58,7 @@ public class ThirdPartyRedirectRepositoryImpl implements ThirdPartyRedirectRepos
 
     @Override
     public Future<@Nullable ThirdPartyRedirect> insert(ThirdPartyRedirect thirdPartyRedirect) {
-        return client.preparedQuery("INSERT INTO sso_oauth.third_party_redirect(id,uri,third_party_app_id) VALUES (?,?,?) RETURNING id")
+        return client.preparedQuery("INSERT INTO sso_oauth.third_party_redirect(id,uri,third_party_app_id) VALUES ($1, $2, $3) RETURNING id")
                 .execute(Tuple.of(thirdPartyRedirect.getId(),thirdPartyRedirect.getURI(),thirdPartyRedirect.getThirdPartyApp().getId()))
                         .map(rows -> {
                             for(Row row: rows){

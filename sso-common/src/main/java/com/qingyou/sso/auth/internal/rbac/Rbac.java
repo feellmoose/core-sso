@@ -43,7 +43,7 @@ public class Rbac implements IRbac<RbacUserInfo, TargetInfo> {
 
     private Future<Action<List<UserRole>, TargetRole>> convertInfo(Action<RbacUserInfo, TargetInfo> info) {
         var targetInfo = info.target();
-        var roles = client.preparedQuery("select (id,app_id,user_id,role_id) from auth_rbac.user_role where appId = ? and user_id = ?")
+        var roles = client.preparedQuery("SELECT id,app_id,user_id,role_id FROM auth_rbac.user_role WHERE app_id = $1 AND user_id = $2")
                 .execute(Tuple.of(targetInfo.appId(),info.owned().id()))
                 .flatMap(rows -> {
                     Map<UserRole,Long> map = new HashMap<>();
@@ -64,16 +64,16 @@ public class Rbac implements IRbac<RbacUserInfo, TargetInfo> {
                                 }).toList();
                     });
                 });
-        var target = client.preparedQuery("select (id,`action`,app_id,object) from auth_rbac.target where `action` = ? and app_id = ? and object = ?")
+        var target = client.preparedQuery("SELECT id,app_id,\"action\",object FROM auth_rbac.target WHERE app_id = $1 AND \"action\" = $2 AND object = $3")
                 .execute(Tuple.of(targetInfo.appId(),targetInfo.action(),targetInfo.object()))
                 .flatMap(rows -> {
                     for (Row row: rows){
                         TargetRole role = new TargetRole();
                         role.setId(row.getLong("id"));
-                        role.setAction(row.getString("action"));
                         role.setAppid(row.getLong("app_id"));
+                        role.setAction(row.getString("action"));
                         role.setObject(row.getString("object"));
-                        return client.preparedQuery("select role_id from auth_rbac.target_role where target_id = ?")
+                        return client.preparedQuery("SELECT role_id FROM auth_rbac.target_role WHERE target_id = $1")
                                 .execute(Tuple.of(role.getId()))
                                 .flatMap(rs -> {
                                     List<Long> roleIds = new ArrayList<>();
@@ -92,7 +92,8 @@ public class Rbac implements IRbac<RbacUserInfo, TargetInfo> {
     }
 
     private Future<List<Role>> getRoles(List<Long> ids) {
-        return client.preparedQuery("select (id,description,name) from auth_rbac.user_role where id in " + StringUtils.union(ids))
+        if (ids.isEmpty()) return Future.succeededFuture(Collections.emptyList());
+        return client.preparedQuery("SELECT id,description,name FROM auth_rbac.role WHERE id IN " + StringUtils.union(ids))
                 .execute(Tuple.from(ids))
                 .map(rows -> {
                     List<Role> roles = new ArrayList<>();

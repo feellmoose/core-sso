@@ -69,7 +69,7 @@ public class DefaultEmailSSOService implements EmailSSOService {
                     User register = new User();
                     register.setEmail(email);
                     register.setName(email);
-                    return userRepository.insert(user);
+                    return userRepository.insert(register);
                 }).map(user ->  new LoginResult(user.getId(),user.getName()));
             }
         });

@@ -23,7 +23,7 @@ public class UserInfoRepositoryImpl implements UserInfoRepository {
 
     @Override
     public Future<List<UserInfo>> findByUserId(Long userId) {
-        return client.preparedQuery("SELECT (id,metadata,data_type,platform_type) FROM sso_user.user_info WHERE user_id = ?")
+        return client.preparedQuery("SELECT id,metadata,data_type,platform_type FROM sso_user.user_info WHERE user_id = $1")
                 .execute(Tuple.of(userId))
                 .map(rows -> {
                     List<UserInfo> infos = new ArrayList<>();
@@ -41,7 +41,7 @@ public class UserInfoRepositoryImpl implements UserInfoRepository {
 
     @Override
     public Future<List<UserInfo>> findByUserIdAndPlatformTypes(Long userId, Collection<PlatformType> platformTypes) {
-        return client.preparedQuery("SELECT (id,metadata,data_type,platform_type) FROM sso_user.user_info WHERE user_id = ? AND platform_type IN " + StringUtils.union(platformTypes))
+        return client.preparedQuery("SELECT id,metadata,data_type,platform_type FROM sso_user.user_info WHERE user_id = $1 AND platform_type IN " + StringUtils.union(2, platformTypes))
                 .execute(Tuple.of(userId)
                         .addArrayOfInteger(platformTypes.stream()
                                 .mapToInt(Enum::ordinal)
@@ -63,7 +63,7 @@ public class UserInfoRepositoryImpl implements UserInfoRepository {
 
     @Override
     public Future<@Nullable UserInfo> insert(UserInfo info) {
-        return client.preparedQuery("INSERT INTO sso_user.user_info(metadata,data_type,platform_type,user_id) VALUES (?, ?, ?, ?) RETURNING id")
+        return client.preparedQuery("INSERT INTO sso_user.user_info(metadata,data_type,platform_type,user_id) VALUES ($1, $2, $3, $4) RETURNING id")
                 .execute(Tuple.of(info.getMetadata(),info.getDataType().ordinal(),info.getPlatformType().ordinal(),info.getUser().getId()))
                 .map(rows -> {
                     for (Row row : rows) {

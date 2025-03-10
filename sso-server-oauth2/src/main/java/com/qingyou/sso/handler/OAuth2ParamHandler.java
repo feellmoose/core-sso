@@ -161,15 +161,13 @@ public abstract class OAuth2ParamHandler<T> implements OAuth2Params {
             if (!auth.success()) return ValidationResult.fail(auth.error());
             String[] words = auth.result();
 
-            MultiMap params = routingContext.queryParams();
+            MultiMap params = routingContext.request().formAttributes();
 
-            if (!params.contains("client_id")
-                    || !params.contains("grant_type")
-            ) return ValidationResult.fail(ErrorType.OAuth2.INVALID_REQUEST);
+            if ( !params.contains("grant_type"))
+                return ValidationResult.fail(ErrorType.OAuth2.INVALID_REQUEST);
 
             String refreshToken = params.get("refresh_token");
             String codeVerifier = params.get("code_verifier");
-            String clientId = params.get("client_id");
             String redirectURI = params.get("redirect_uri");
             String code = params.get("code");
 
@@ -181,13 +179,12 @@ public abstract class OAuth2ParamHandler<T> implements OAuth2Params {
             };
             if (grantType == null) return ValidationResult.fail(ErrorType.OAuth2.INVALID_GRANT);
 
-            if (clientId.length() > 40
-                    || !words[0].equals(clientId)
-            ) return ValidationResult.fail(ErrorType.OAuth2.INVALID_CLIENT);
+            if (words[0].length() > 40)
+                return ValidationResult.fail(ErrorType.OAuth2.INVALID_CLIENT);
 
             return ValidationResult.result(new Token(
                     grantType,
-                    clientId,
+                    words[0],
                     words[1],
                     refreshToken,
                     redirectURI,
