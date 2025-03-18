@@ -43,22 +43,22 @@
         <dependency>
             <groupId>com.qingyou</groupId>
             <artifactId>sso-common</artifactId>
-            <version>${version}</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.qingyou</groupId>
             <artifactId>sso-server-oauth2</artifactId>
-            <version>${version}</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.qingyou</groupId>
             <artifactId>sso-server-login</artifactId>
-            <version>${version}</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.qingyou</groupId>
             <artifactId>sso-server-admin</artifactId>
-            <version>${version}</version>
+            <version>${project.version}</version>
         </dependency>
 
     </dependencies>
