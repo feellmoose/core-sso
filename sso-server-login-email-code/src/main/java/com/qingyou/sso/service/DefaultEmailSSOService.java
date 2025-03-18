@@ -8,6 +8,7 @@ import com.qingyou.sso.domain.user.Account;
 import com.qingyou.sso.domain.user.User;
 import com.qingyou.sso.infra.cache.Cache;
 import com.qingyou.sso.infra.config.Configuration;
+import com.qingyou.sso.infra.config.ConfigurationSource;
 import com.qingyou.sso.infra.exception.BizException;
 import com.qingyou.sso.infra.exception.ErrorType;
 import com.qingyou.sso.infra.repository.domain.AccountRepository;
@@ -23,14 +24,14 @@ import java.time.Duration;
 public class DefaultEmailSSOService implements EmailSSOService {
 
     private final MailClient mailClient;
-    private final Configuration.Mail config;
+    private final Configuration.Mail.Message config;
     private final Cache cache;
     private final UserRepository userRepository;
     private final AccountRepository accountRepository;
 
-    public DefaultEmailSSOService(MailClient mailClient, Configuration configuration, Cache cache, UserRepository userRepository, AccountRepository accountRepository) {
+    public DefaultEmailSSOService(MailClient mailClient, ConfigurationSource configurationSource, Cache cache, UserRepository userRepository, AccountRepository accountRepository) {
         this.mailClient = mailClient;
-        this.config = configuration.mail();
+        this.config = configurationSource.getConfiguration().mail().message();
         this.cache = cache;
         this.userRepository = userRepository;
         this.accountRepository = accountRepository;

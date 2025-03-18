@@ -20,7 +20,12 @@ public class ConfigLoader {
         );
     }
 
-    public static ConfigRetrieverOptions defaultOptions() {
+    public Future<ConfigurationSource> loadSource() {
+        ConfigRetriever retriever = ConfigRetriever.create(vertx, defaultOptions());
+        return retriever.getConfig().map(ConfigurationSource::new);
+    }
+
+    private static ConfigRetrieverOptions defaultOptions() {
         return new ConfigRetrieverOptions()
                 .setIncludeDefaultStores(true)
                 .setScanPeriod(-1)

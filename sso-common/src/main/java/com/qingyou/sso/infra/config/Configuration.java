@@ -12,8 +12,9 @@ public record Configuration(
     public record Server(String host, int port) {
     }
 
-    public record Database(String host, int port, String database, String user, String password, Connection connection) {
-        public record Connection(int poolSize) {
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Database(String host, int port, String database, String user, String password, Pool pool) {
+        public record Pool(int maxSize) {
         }
     }
 
@@ -21,13 +22,15 @@ public record Configuration(
         public record Jwt(String secret) {
         }
 
+        @JsonIgnoreProperties(ignoreUnknown = true)
         public record Cookie(String name, long expire, long maxAge, long timeout, String path, String domain,
                              boolean secure, boolean httpOnly) {
         }
     }
 
-    public record Mail(String host, int port, String username, String password, String from, String subject, String pattern, long expire) {
-
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Mail(Message message) {
+        public record Message(String from, String subject, String pattern, long expire){}
     }
 
 
