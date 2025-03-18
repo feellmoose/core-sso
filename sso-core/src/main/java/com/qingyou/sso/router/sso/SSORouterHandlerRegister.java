@@ -1,11 +1,9 @@
 package com.qingyou.sso.router.sso;
 
-import com.qingyou.sso.infra.exception.BizException;
-import com.qingyou.sso.infra.exception.ErrorType;
+import com.qingyou.sso.handler.platform.CustomRegisterHandler;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
+import java.util.ServiceLoader;
 import java.util.stream.Collectors;
 
 public class SSORouterHandlerRegister {
@@ -15,16 +13,18 @@ public class SSORouterHandlerRegister {
     private final List<CustomRegisterRouterHandler> customRegisterRouterHandlers;
 
     private SSORouterHandlerRegister() {
-        this.customRegisterRouterHandlers = new ArrayList<>();
+        this.customRegisterRouterHandlers = load();
     }
 
     public List<CustomRegisterRouterHandler> getAll() {
-        Set<String> names = this.customRegisterRouterHandlers.stream()
-                .map(CustomRegisterRouterHandler::getName)
-                .collect(Collectors.toSet());
-        if (names.size() != this.customRegisterRouterHandlers.size())
-            throw new BizException(ErrorType.Inner.Init,"Custom_register_login_handler name can't be duplicated");
         return this.customRegisterRouterHandlers;
+    }
+
+    public List<CustomRegisterRouterHandler> load() {
+        ServiceLoader<CustomRegisterHandler> serviceLoader = ServiceLoader.load(CustomRegisterHandler.class);
+        return serviceLoader.stream().map(custom ->
+                new CustomRegisterRouterHandler(custom.get())
+        ).collect(Collectors.toList());
     }
 
     public SSORouterHandlerRegister register(CustomRegisterRouterHandler customRouterHandler) {

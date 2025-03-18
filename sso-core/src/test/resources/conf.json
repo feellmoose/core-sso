@@ -9,8 +9,8 @@
     "database" : "sso",
     "user" : "postgres",
     "password" : "passw0rd",
-    "connection" : {
-      "poolSize" : 10
+    "pool" : {
+      "maxSize" : 10
     }
   },
   "security": {
@@ -28,13 +28,14 @@
     }
   },
   "mail": {
-    "expire": 60000,
+    "message": {
+      "expire": 60000,
+      "from" : "",
+      "subject" : "[Pomelo SSO] One-Time Passcode (OTP)",
+      "pattern" : "Code: %s"
+    },
     "username": "feell@163.com",
     "password": "",
-    "host" : "",
-    "port" : "",
-    "from" : "",
-    "subject" : "[Pomelo SSO] One-Time Passcode (OTP)",
-    "pattern" : "Code: %s"
+    "host" : ""
   }
 }

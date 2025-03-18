@@ -2,7 +2,7 @@ package com.qingyou.sso.inject.provider;
 
 import com.qingyou.sso.handler.AuthHandler;
 import com.qingyou.sso.handler.platform.EmailSSOHandler;
-import com.qingyou.sso.infra.config.Configuration;
+import com.qingyou.sso.infra.config.ConfigurationSource;
 import com.qingyou.sso.router.admin.AdminRouterHandler;
 import com.qingyou.sso.router.global.NotFoundRouterHandler;
 import com.qingyou.sso.router.global.SessionRouterHandler;
@@ -22,6 +22,8 @@ import io.vertx.ext.web.sstore.SessionStore;
 import jakarta.inject.Singleton;
 import lombok.AllArgsConstructor;
 
+import javax.annotation.Nullable;
+
 @Module
 @AllArgsConstructor
 public class RouterHandlerModule {
@@ -30,15 +32,16 @@ public class RouterHandlerModule {
 
     @Provides
     @Singleton
-    SessionRouterHandler provideSessionRouterHandler(SessionStore sessionStore, Configuration configuration) {
-        var handler = new SessionRouterHandler(sessionStore, configuration);
+    SessionRouterHandler provideSessionRouterHandler(SessionStore sessionStore, ConfigurationSource configurationSource) {
+        var handler = new SessionRouterHandler(sessionStore, configurationSource);
         handler.handle(router);
         return handler;
     }
 
     @Provides
     @Singleton
-    public EmailSSORouterHandler provideEmailSSORouterHandler(EmailSSOService emailSSOService) {
+    public EmailSSORouterHandler provideEmailSSORouterHandler(@Nullable EmailSSOService emailSSOService) {
+        if (emailSSOService == null) return null;
         var handler = new EmailSSORouterHandler(new EmailSSOHandler(emailSSOService));
         handler.handle(router);
         return handler;

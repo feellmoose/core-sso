@@ -19,6 +19,7 @@ import com.qingyou.sso.inject.provider.BaseModule;
 import com.qingyou.sso.inject.provider.RouterHandlerModule;
 import io.vertx.core.*;
 import io.vertx.core.http.HttpServer;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.pgclient.PgBuilder;
 import io.vertx.pgclient.PgConnectOptions;
@@ -40,10 +41,10 @@ public class CoreVerticle extends AbstractVerticle {
 
     @Override
     public void start(Promise<Void> startPromise) {
-        var config = new ConfigLoader(vertx).load().andThen(result -> {
+        var config = new ConfigLoader(vertx).loadSource().andThen(result -> {
             if (result.succeeded()) {
                 log.info("Load Conf successfully");
-                log.info("\n{}", Constants.logo("pomelo-sso", "v1.0.1"));
+                log.info("\n{}", Constants.logo("pomelo-sso", "v1.0.3"));
             } else {
                 throw new BizException(ErrorType.Inner.Init, "Load Conf failed", result.cause());
             }
@@ -51,7 +52,7 @@ public class CoreVerticle extends AbstractVerticle {
 
         //load redis and test connection
         var cache = DefaultCache.build(vertx);
-        var clientFuture = config.map(c -> connectSqlClient(c,vertx));
+        var clientFuture = config.map(c -> connectSqlClient(c.getSource().getJsonObject("database"),vertx));
 
         Future.all(List.of(config, clientFuture, cache))
                 .map(v -> {
@@ -65,17 +66,15 @@ public class CoreVerticle extends AbstractVerticle {
 
     }
 
-    private SqlClient connectSqlClient(Configuration config, Vertx vertx) {
-        var db = config.database();
-        PgConnectOptions connectOptions = new PgConnectOptions()
-                .setPort(db.port())
-                .setHost(db.host())
-                .setDatabase(db.database())
-                .setUser(db.user())
-                .setPassword(db.password());
+    private SqlClient connectSqlClient(JsonObject json, Vertx vertx) {
+        PgConnectOptions connectOptions = new PgConnectOptions(json);
 
-        PoolOptions poolOptions = new PoolOptions()
-                .setMaxSize(db.connection().poolSize());
+        PoolOptions poolOptions;
+        if (json.containsKey("pool")) {
+            poolOptions = new PoolOptions(json.getJsonObject("pool"));
+        } else {
+            poolOptions = new PoolOptions();
+        }
 
         return PgBuilder
                 .client()
@@ -116,7 +115,7 @@ public class CoreVerticle extends AbstractVerticle {
 
     private Future<HttpServer> runHttpServer(BaseModule baseModule){
         //server start must after the config and the persistence
-        var serverConf = baseModule.configuration().server();
+        var serverConf = baseModule.configuration().getConfiguration().server();
 
         Router router = Router.router(vertx);
         server = vertx.createHttpServer();
@@ -128,7 +127,7 @@ public class CoreVerticle extends AbstractVerticle {
         register.registerAllGroups();
         register.registerNotFoundRouter();
 
-        if (baseModule.configuration().mail() != null) {
+        if (baseModule.configuration().getConfiguration().mail() != null) {
             register.registerEmailSSORouters();
         }
 

@@ -21,7 +21,7 @@ import com.qingyou.sso.domain.oauth.ThirdPartyApp;
 import com.qingyou.sso.domain.oauth.ThirdPartyRequiredUserInfo;
 import com.qingyou.sso.domain.user.User;
 import com.qingyou.sso.infra.cache.Cache;
-import com.qingyou.sso.infra.config.Configuration;
+import com.qingyou.sso.infra.config.ConfigurationSource;
 import com.qingyou.sso.infra.exception.BizException;
 import com.qingyou.sso.infra.exception.ErrorType;
 import com.qingyou.sso.infra.repository.domain.ThirdPartyRepository;
@@ -56,13 +56,13 @@ public class DefaultOAuth2Service implements OAuth2Service {
     private final long accessTokenExpireIn = accessTokenExpireTime.toMillis();
     private final Duration refreshTokenExpireTime = Duration.of(1, ChronoUnit.DAYS);
 
-    public DefaultOAuth2Service(AuthService authService, ThirdPartyRepository thirdPartyRepository, UserInfoRepository userInfoRepository, UserRepository userRepository, Configuration configuration, Cache cache) {
+    public DefaultOAuth2Service(AuthService authService, ThirdPartyRepository thirdPartyRepository, UserInfoRepository userInfoRepository, UserRepository userRepository, ConfigurationSource configuration, Cache cache) {
         this.authService = authService;
         this.thirdPartyRepository = thirdPartyRepository;
         this.userInfoRepository = userInfoRepository;
         this.userRepository = userRepository;
         this.cache = cache;
-        this.algorithm = Algorithm.HMAC512(configuration.security().jwt().secret());
+        this.algorithm = Algorithm.HMAC512(configuration.getConfiguration().security().jwt().secret());
         this.verifier = JWT.require(algorithm).build();
     }
 

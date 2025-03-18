@@ -6,6 +6,7 @@ import com.qingyou.sso.auth.api.AuthService;
 import com.qingyou.sso.auth.api.dto.AuthServiceWithEventBus;
 import com.qingyou.sso.infra.cache.Cache;
 import com.qingyou.sso.infra.config.Configuration;
+import com.qingyou.sso.infra.config.ConfigurationSource;
 import dagger.Module;
 import dagger.Provides;
 import io.vertx.core.Vertx;
@@ -19,12 +20,14 @@ import io.vertx.ext.web.sstore.SessionStore;
 import io.vertx.sqlclient.SqlClient;
 import jakarta.inject.Singleton;
 
+import javax.annotation.Nullable;
+
 
 @Module
 public class BaseModule extends BaseDependency {
 
-    public BaseModule(Configuration configuration, ObjectMapper objectMapper, Vertx vertx, SqlClient sqlClient, Cache cache) {
-        this.configuration = configuration;
+    public BaseModule(ConfigurationSource configurationSource, ObjectMapper objectMapper, Vertx vertx, SqlClient sqlClient, Cache cache) {
+        this.configuration = configurationSource;
         this.objectMapper = objectMapper;
         this.vertx = vertx;
         this.cache = cache;
@@ -46,7 +49,7 @@ public class BaseModule extends BaseDependency {
 
     @Provides
     @Singleton
-    public Configuration configuration() {
+    public ConfigurationSource configuration() {
         return configuration;
     }
 
@@ -72,17 +75,9 @@ public class BaseModule extends BaseDependency {
     @Provides
     @Singleton
     public MailClient provideMailClient() {
-        var mail = configuration.mail();
-        if (mail != null) {
-            return MailClient.create(vertx, new MailConfig()
-                    .setHostname(mail.host())
-                    .setPort(mail.port())
-                    .setUsername(mail.username())
-                    .setPassword(mail.password())
-                    .setLogin(LoginOption.REQUIRED)
-            );
-        }
-        return null;
+        var mail = configuration.getSource().getJsonObject("mail");
+        if (mail == null) return null;
+        return MailClient.create(vertx, new MailConfig(mail));
     }
 
     @Provides

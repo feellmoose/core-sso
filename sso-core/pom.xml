@@ -60,6 +60,12 @@
             <artifactId>sso-server-admin</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.qingyou</groupId>
+            <artifactId>sso-server-login-email-code</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
 
     </dependencies>
 

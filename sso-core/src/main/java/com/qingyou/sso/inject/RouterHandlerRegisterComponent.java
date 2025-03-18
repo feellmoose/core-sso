@@ -13,6 +13,8 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.AllArgsConstructor;
 
+import javax.annotation.Nullable;
+
 @Singleton
 @Component(modules = {
         ServiceModule.class,
@@ -33,6 +35,7 @@ public interface RouterHandlerRegisterComponent {
 
     NotFoundRouterHandler registerNotFoundRouter();
 
+    @Nullable
     EmailSSORouterHandler registerEmailSSORouters();
 
     RouterGroups registerAllGroups();
@@ -47,6 +50,9 @@ public interface RouterHandlerRegisterComponent {
         private final OAuth2RouterHandler OAuth2RouterHandler;
         //custom-login-module
         private final SSORouterHandlerRegister SSORouterHandlerRegister;
+        //email-login-module
+        @Nullable
+        private final EmailSSORouterHandler emailSSORouterHandler;
         //third-party-app
         private final AdminRouterHandler adminRouterHandler;
     }
