@@ -21,8 +21,8 @@ public class ServiceModule {
 
     @Provides
     @Singleton
-    public BaseSSOService provideLoginService(UserRepository userRepository, AccountRepository accountRepository) {
-        return new DefaultBaseSSOService(userRepository, accountRepository);
+    public BaseSSOService provideLoginService(UserRepository userRepository, UserInfoRepository userInfoRepository, AccountRepository accountRepository) {
+        return new DefaultBaseSSOService(userRepository, accountRepository, userInfoRepository);
     }
 
     @Provides

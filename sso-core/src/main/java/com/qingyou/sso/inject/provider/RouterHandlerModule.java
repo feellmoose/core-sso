@@ -7,10 +7,7 @@ import com.qingyou.sso.router.admin.AdminRouterHandler;
 import com.qingyou.sso.router.global.NotFoundRouterHandler;
 import com.qingyou.sso.router.global.SessionRouterHandler;
 import com.qingyou.sso.router.oauth.OAuth2RouterHandler;
-import com.qingyou.sso.router.sso.CustomRegisterRouterHandler;
-import com.qingyou.sso.router.sso.EmailSSORouterHandler;
-import com.qingyou.sso.router.sso.LoginRouterHandler;
-import com.qingyou.sso.router.sso.SSORouterHandlerRegister;
+import com.qingyou.sso.router.sso.*;
 import com.qingyou.sso.service.BaseSSOService;
 import com.qingyou.sso.service.EmailSSOService;
 import com.qingyou.sso.service.ThirdPartyAppService;
@@ -65,11 +62,12 @@ public class RouterHandlerModule {
 
     @Provides
     @Singleton
-    SSORouterHandlerRegister provideCustomRouterHandlerRegister() {
-        for (CustomRegisterRouterHandler handler: SSORouterHandlerRegister.Instance.getAll()){
+    SSORouterHandlerRegistry provideCustomRouterHandlerRegister(BaseSSOService baseSSOService) {
+        SSORouterHandlerRegistry registry = new SSORouterHandlerRegistry(baseSSOService);
+        for (CustomSSORouterHandler handler: registry.getAll()){
             handler.handle(router);
         }
-        return SSORouterHandlerRegister.Instance;
+        return registry;
     }
 
     @Provides

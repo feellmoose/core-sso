@@ -8,18 +8,15 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class User {
-
     private Long id;
-
     private String name;
-
     private String email;
-
     private String phone;
+
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
-
     private Account account;
+
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private List<UserInfo> userInfo;

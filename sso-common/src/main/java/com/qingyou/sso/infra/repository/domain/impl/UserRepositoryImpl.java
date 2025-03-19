@@ -49,6 +49,23 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
+    public Future<@Nullable User> findByName(String name) {
+        return client.preparedQuery("SELECT id,name,email,phone FROM sso_user.user WHERE name = $1")
+                .execute(Tuple.of(name))
+                .map(rows -> {
+                    for (Row row : rows) {
+                        User user = new User();
+                        user.setId(row.getLong("id"));
+                        user.setName(row.getString("name"));
+                        user.setEmail(row.getString("email"));
+                        user.setPhone(row.getString("phone"));
+                        return user;
+                    }
+                    return null;
+                });
+    }
+
+    @Override
     public Future<@Nullable User> findByEmail(String email) {
         return client.preparedQuery("SELECT id,name,email,phone FROM sso_user.user WHERE email = $1")
                 .execute(Tuple.of(email))
