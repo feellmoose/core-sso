@@ -40,39 +40,36 @@ public class DefaultBaseSSOService implements BaseSSOService {
     @Override
     public Future<LoginResult> login(ThirdPartySSOUserInfo userInfo, DataChecker dataChecker) {
         if (userInfo != null) {
-            if (userInfo.name()!=null) {
-                return userRepository.findByName(userInfo.name()).flatMap(user -> {
-                    if (user == null) throw new BizException(ErrorType.Inner.Login, "User not found");
-                    return userInfoRepository.findByUserIdAndPlatformTypes(user.getId(), List.of(userInfo.info().platformType())).map(userInfos -> {
-                        if (userInfos.isEmpty()) throw new BizException(ErrorType.Inner.Login, "Login method not register");
-                        var info = userInfos.get(0);
-                        if (dataChecker.check(info.getValue(), userInfo.info().getValue())) {
-                            return new LoginResult(user.getId(), user.getName());
-                        }
-                        throw new BizException(ErrorType.Inner.Login, "Login failed, data check failed");
-                    });
-                });
-            }
-            if (userInfo.email()!=null) {
+            if (userInfo.email() != null) {
                 return userRepository.findByEmail(userInfo.email()).flatMap(user -> {
                     if (user == null) throw new BizException(ErrorType.Inner.Login, "User not found");
                     return userInfoRepository.findByUserIdAndPlatformTypes(user.getId(), List.of(userInfo.info().platformType())).map(userInfos -> {
                         if (userInfos.isEmpty()) throw new BizException(ErrorType.Inner.Login, "Login method not register");
-                        var info = userInfos.get(0);
-                        if (dataChecker.check(info.getValue(), userInfo.info().getValue())) {
+                        if (dataChecker.check(userInfos.get(0).getValue())) {
                             return new LoginResult(user.getId(), user.getName());
                         }
                         throw new BizException(ErrorType.Inner.Login, "Login failed, data check failed");
                     });
                 });
             }
-            if (userInfo.phone()!=null) {
+            if (userInfo.phone() != null) {
                 return userRepository.findByPhone(userInfo.phone()).flatMap(user -> {
                     if (user == null) throw new BizException(ErrorType.Inner.Login, "User not found");
                     return userInfoRepository.findByUserIdAndPlatformTypes(user.getId(),List.of(userInfo.info().platformType())).map(userInfos -> {
                         if (userInfos.isEmpty()) throw new BizException(ErrorType.Inner.Login, "Login method not register");
-                        var info = userInfos.get(0);
-                        if (dataChecker.check(info.getValue(), userInfo.info().getValue())) {
+                        if (dataChecker.check(userInfos.get(0).getValue())) {
+                            return new LoginResult(user.getId(), user.getName());
+                        }
+                        throw new BizException(ErrorType.Inner.Login, "Login failed, data check failed");
+                    });
+                });
+            }
+            if (userInfo.name() != null) {
+                return userRepository.findByName(userInfo.name()).flatMap(user -> {
+                    if (user == null) throw new BizException(ErrorType.Inner.Login, "User not found");
+                    return userInfoRepository.findByUserIdAndPlatformTypes(user.getId(), List.of(userInfo.info().platformType())).map(userInfos -> {
+                        if (userInfos.isEmpty()) throw new BizException(ErrorType.Inner.Login, "Login method not register");
+                        if (dataChecker.check(userInfos.get(0).getValue())) {
                             return new LoginResult(user.getId(), user.getName());
                         }
                         throw new BizException(ErrorType.Inner.Login, "Login failed, data check failed");
@@ -98,6 +95,30 @@ public class DefaultBaseSSOService implements BaseSSOService {
                     encoded.encoded(),encoded.salt(),
                     user);
             return accountRepository.insert(account).map(user);
+        }).map(user ->  new LoginResult(user.getId(),user.getName()));
+    }
+
+    @Override
+    public Future<LoginResult> registerByThirdParty(String username, ThirdPartySSOUserInfo userInfo) {
+        User register = new User();
+        register.setName("Visitor_" + StringUtils.randomNum(8));
+        return userRepository.insert(register).flatMap(user -> {
+            var encoded = PasswordEncodeUtils.encode("");
+            Account account = new Account(
+                    user.getId(),
+                    username,
+                    encoded.encoded(),encoded.salt(),
+                    user);
+            return accountRepository.insert(account)
+                    .flatMap(v -> {
+                        UserInfo registerInfo = new UserInfo();
+                        registerInfo.setUser(user);
+                        var info = userInfo.info();
+                        registerInfo.setMetadata(info.metadata());
+                        registerInfo.setPlatformType(info.platformType());
+                        registerInfo.setDataType(info.dataType());
+                        return userInfoRepository.insert(registerInfo);
+                    }).map(user);
         }).map(user ->  new LoginResult(user.getId(),user.getName()));
     }
 

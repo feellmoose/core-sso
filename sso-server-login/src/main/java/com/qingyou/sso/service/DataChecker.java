@@ -4,5 +4,5 @@ import java.util.Map;
 
 @FunctionalInterface
 public interface DataChecker {
-    boolean check(Map<String,String> metadata, Map<String,String> login);
+    boolean check(Map<String,String> metadata);
 }
