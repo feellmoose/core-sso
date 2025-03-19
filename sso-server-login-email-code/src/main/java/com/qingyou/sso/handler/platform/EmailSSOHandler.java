@@ -3,16 +3,14 @@ package com.qingyou.sso.handler.platform;
 import com.qingyou.sso.api.Login;
 import com.qingyou.sso.api.Register;
 import com.qingyou.sso.api.SendEmail;
-import com.qingyou.sso.api.SetAccount;
 import com.qingyou.sso.api.param.Code;
 import com.qingyou.sso.api.param.Email;
-import com.qingyou.sso.api.param.UsernamePassword;
 import com.qingyou.sso.api.result.LoginResult;
 import com.qingyou.sso.service.EmailSSOService;
 import io.vertx.core.Future;
 import io.vertx.ext.web.RoutingContext;
 
-public class EmailSSOHandler implements Login, Register, SendEmail, SetAccount {
+public class EmailSSOHandler implements Login, Register, SendEmail{
 
     private final EmailSSOService emailSSOService;
 
@@ -40,11 +38,4 @@ public class EmailSSOHandler implements Login, Register, SendEmail, SetAccount {
                 routingContext.session().put("userId",u.userId()));
     }
 
-    @Override
-    public Future<LoginResult> setAccount(RoutingContext routingContext) {
-        UsernamePassword usernamePassword = routingContext.body().asPojo(UsernamePassword.class);
-        Long userId = routingContext.session().<Long>get("userId");
-        return emailSSOService.setAccount(usernamePassword, userId);
-
-    }
 }

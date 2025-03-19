@@ -4,6 +4,6 @@ import com.qingyou.sso.api.Login;
 import com.qingyou.sso.api.Register;
 
 
-public interface CustomRegisterHandler extends Login, Register {
+public interface CustomSSOHandler extends Login, Register {
     default String getName() { return "";}
 }

@@ -10,4 +10,6 @@ public interface AccountRepository{
 
     Future<@Nullable Account> insert(Account account);
 
+    Future<Void> updatePasswordByIdAndUsername(Long userId, String username, String password, String salt);
+
 }

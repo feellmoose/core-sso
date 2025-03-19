@@ -22,6 +22,5 @@ public class EmailSSORouterHandler implements Handler<Router> {
         router.get("/sso/email/code").handler(GlobalHttpResponse.wrap(emailSSOHandler::email, log));
         router.get("/sso/email/login").handler(GlobalHttpResponse.wrap(emailSSOHandler::login, log));
         router.get("/sso/email/register").handler(GlobalHttpResponse.wrap(emailSSOHandler::register, log));
-        router.get("/sso/email/account").handler(GlobalHttpResponse.wrap(emailSSOHandler::setAccount, log));
     }
 }

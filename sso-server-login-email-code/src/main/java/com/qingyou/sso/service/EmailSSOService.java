@@ -10,5 +10,4 @@ public interface EmailSSOService {
     Future<Boolean> email(Email email);
     Future<LoginResult> login(Code code);
     Future<LoginResult> register(Code code);
-    Future<LoginResult> setAccount(UsernamePassword usernamePassword, Long userId);
 }

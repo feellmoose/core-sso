@@ -22,7 +22,6 @@ import io.vertx.ext.mail.MailMessage;
 import java.time.Duration;
 
 public class DefaultEmailSSOService implements EmailSSOService {
-
     private final MailClient mailClient;
     private final Configuration.Mail.Message config;
     private final Cache cache;
@@ -66,34 +65,26 @@ public class DefaultEmailSSOService implements EmailSSOService {
             if (email == null) throw new BizException(ErrorType.Showed.Auth,"Code expire or login failed");
             else {
                 return userRepository.findByEmail(email).flatMap(user -> {
-                    if (user != null) throw new BizException(ErrorType.Showed.Auth,"Please login");
+                    if (user != null) throw new BizException(ErrorType.Showed.Auth,"Register failed, please login");
                     User register = new User();
                     register.setEmail(email);
                     register.setName(email);
                     return userRepository.insert(register);
+                }).flatMap(user -> {
+                    return accountRepository.findByUsername(code.username()).map(account -> {
+                        if (account != null) throw new BizException(ErrorType.Showed.Auth,"Account of this username already exists");
+                        return null;
+                    }).flatMap(v -> {
+                        var encoded = PasswordEncodeUtils.encode(code.password());
+                        Account account = new Account(
+                                user.getId(),
+                                code.username() == null? user.getEmail() : code.username(),
+                                encoded.encoded(),encoded.salt(),
+                                user);
+                        return accountRepository.insert(account).map(user);
+                    });
                 }).map(user ->  new LoginResult(user.getId(),user.getName()));
             }
         });
-    }
-
-    @Override
-    public Future<LoginResult> setAccount(UsernamePassword usernamePassword, Long userId) {
-        return userRepository.findById(userId).flatMap(user -> {
-            if (user == null) throw new BizException(ErrorType.Showed.Auth,"Please register first");
-            if (user.getEmail() == null) throw new BizException(ErrorType.Showed.Auth,"Only email register can use this api");
-            if (user.getAccount() != null) throw new BizException(ErrorType.Showed.Auth,"Account already exists");
-            return accountRepository.findByUsername(usernamePassword.username()).map(account -> {
-                if (account != null) throw new BizException(ErrorType.Showed.Auth,"Account of this username already exists");
-                return null;
-            }).flatMap(v -> {
-                var encoded = PasswordEncodeUtils.encode(usernamePassword.password());
-                Account account = new Account(
-                        userId,
-                        usernamePassword.username() == null? user.getEmail() : usernamePassword.username(),
-                        encoded.encoded(),encoded.salt(),
-                        user);
-                return accountRepository.insert(account).map(user);
-            });
-        }).map(user -> new LoginResult(user.getId(),user.getName()));
     }
 }
