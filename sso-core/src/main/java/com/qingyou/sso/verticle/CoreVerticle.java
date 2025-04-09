@@ -1,16 +1,10 @@
 package com.qingyou.sso.verticle;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qingyou.sso.auth.api.dto.Action;
 import com.qingyou.sso.auth.internal.rbac.Rbac;
-import com.qingyou.sso.auth.internal.rbac.RbacUserInfo;
-import com.qingyou.sso.auth.internal.rbac.TargetInfo;
 import com.qingyou.sso.infra.Constants;
 import com.qingyou.sso.infra.cache.DefaultCache;
-import com.qingyou.sso.infra.config.ConfigLoader;
-import com.qingyou.sso.infra.config.Configuration;
+import com.qingyou.sso.infra.config.ConfigurationSourceLoader;
 import com.qingyou.sso.infra.exception.BizException;
 import com.qingyou.sso.infra.exception.ErrorType;
 import com.qingyou.sso.infra.response.EventMessageHandler;
@@ -19,6 +13,8 @@ import com.qingyou.sso.inject.provider.BaseModule;
 import com.qingyou.sso.inject.provider.RouterHandlerModule;
 import io.vertx.core.*;
 import io.vertx.core.http.HttpServer;
+import io.vertx.core.json.Json;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.pgclient.PgBuilder;
@@ -41,7 +37,7 @@ public class CoreVerticle extends AbstractVerticle {
 
     @Override
     public void start(Promise<Void> startPromise) {
-        var config = new ConfigLoader(vertx).loadSource().andThen(result -> {
+        var config = new ConfigurationSourceLoader(vertx).loadSource().andThen(result -> {
             if (result.succeeded()) {
                 log.info("Load Conf successfully");
                 log.info("\n{}", Constants.logo("pomelo-sso", "v1.0.3"));
@@ -57,7 +53,7 @@ public class CoreVerticle extends AbstractVerticle {
         Future.all(List.of(config, clientFuture, cache))
                 .map(v -> {
                     client = clientFuture.result();
-                    return new BaseModule(config.result(), new ObjectMapper(), vertx, client, cache.result());
+                    return new BaseModule(config.result(), vertx, client, cache.result());
                 })
                 .map(this::runAuthEventListener)
                 .flatMap(this::runHttpServer)
@@ -86,25 +82,19 @@ public class CoreVerticle extends AbstractVerticle {
 
     private BaseModule runAuthEventListener(BaseModule baseModule) {
         final Rbac rbac = new Rbac(baseModule.getSqlClient());
-        var objectMapper = baseModule.getObjectMapper();
-        vertx.eventBus().consumer("auth_rbac", EventMessageHandler.wrap(json -> {
-            try {
-                return objectMapper.<Action<RbacUserInfo, TargetInfo>>readValue(json, new TypeReference<>() {
-                });
-            } catch (JsonProcessingException e) {
-                throw new BizException(e);
+        vertx.eventBus().consumer("auth_rbac", EventMessageHandler.wrap(
+                json -> Json.decodeValue(json, Action.class)
+                , rbac::enforceAndThrows));
+        vertx.eventBus().consumer("multi_auth_rbac", EventMessageHandler.<Collection<Action>,CompositeFuture>wrap(json -> {
+            JsonArray array = Json.decodeValue(json, JsonArray.class);
+            List<Action> actions = new ArrayList<>();
+            for (int i = 0; i < array.size(); i++) {
+                actions.add(Json.decodeValue(array.getString(i), Action.class));
             }
-        }, action -> rbac.enforceAndThrows(action)));
-        vertx.eventBus().consumer("multi_auth_rbac", EventMessageHandler.<Collection<Action<RbacUserInfo, TargetInfo>>,CompositeFuture>wrap(json -> {
-            try {
-                return objectMapper.readValue(json, new TypeReference<>() {
-                });
-            } catch (JsonProcessingException e) {
-                throw new BizException(e);
-            }
+            return actions;
         }, actions -> {
             List<Future<Void>> futures = new ArrayList<>();
-            for (Action<RbacUserInfo,TargetInfo> action : actions) {
+            for (Action action : actions) {
                 futures.add(rbac.enforceAndThrows(action));
             }
             return Future.all(futures);

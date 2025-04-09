@@ -1,12 +1,11 @@
 package com.qingyou.sso.auth.api.dto;
 
-public record Action<O, T>(O owned, T target) implements Info {
+import com.qingyou.sso.auth.internal.rbac.RbacUserInfo;
+import com.qingyou.sso.auth.internal.rbac.TargetInfo;
 
-    public static <O,T> Action<O,T> required(O owned, T required) {
-        return new Action<>(owned, required);
-    }
+public record Action(RbacUserInfo owned, TargetInfo target) implements Info {
 
-    public static <T> Owned<T> owned(T owned) {
-        return new Owned<>(owned);
+    public static Action required(RbacUserInfo owned, TargetInfo required) {
+        return new Action(owned, required);
     }
 }

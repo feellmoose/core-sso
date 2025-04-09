@@ -1,7 +1,6 @@
 package com.qingyou.sso.api.dto;
 
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qingyou.sso.infra.cache.Cache;
 import com.qingyou.sso.infra.config.ConfigurationSource;
 import io.vertx.core.Vertx;
@@ -14,7 +13,6 @@ public abstract class BaseDependency {
     protected Vertx vertx;
     protected ConfigurationSource configuration;
     protected Cache cache;
-    protected ObjectMapper objectMapper;
     protected WebClient webClient;
     protected SqlClient sqlClient;
 }

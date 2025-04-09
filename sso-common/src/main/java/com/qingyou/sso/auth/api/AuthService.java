@@ -12,6 +12,6 @@ import java.util.List;
 
 public interface AuthService {
 
-    Future<Result<Void>> rbac(Action<RbacUserInfo, TargetInfo> action);
-    Future<Result<Void>> rbac(Collection<Action<RbacUserInfo, TargetInfo>> actions);
+    Future<Result<Void>> rbac(Action action);
+    Future<Result<Void>> rbac(Collection<Action> actions);
 }
