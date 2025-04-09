@@ -8,17 +8,12 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
 
-
+/**
+ * Load Configuration by Vertx Config
+ */
 @AllArgsConstructor
-public class ConfigLoader {
+public class ConfigurationSourceLoader {
     private final Vertx vertx;
-
-    public Future<Configuration> load() {
-        ConfigRetriever retriever = ConfigRetriever.create(vertx, defaultOptions());
-        return retriever.getConfig().map(json ->
-                json.mapTo(Configuration.class)
-        );
-    }
 
     public Future<ConfigurationSource> loadSource() {
         ConfigRetriever retriever = ConfigRetriever.create(vertx, defaultOptions());

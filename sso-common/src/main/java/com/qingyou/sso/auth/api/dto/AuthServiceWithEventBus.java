@@ -15,12 +15,11 @@ import java.util.Collection;
 @AllArgsConstructor
 public class AuthServiceWithEventBus implements AuthService {
     private final EventBus eventBus;
-    private final ObjectMapper objectMapper;
 
     @Override
-    public Future<Result<Void>> rbac(Action<RbacUserInfo, TargetInfo> action) {
+    public Future<Result<Void>> rbac(Action action) {
         try {
-            return eventBus.request("auth_rbac", objectMapper.writeValueAsString(action)).map(objectMessage ->
+            return eventBus.request("auth_rbac", Json.encode(action)).map(objectMessage ->
                 (Result<Void>) Json.decodeValue((String) objectMessage.body(),Result.class)
             );
         } catch (Exception e) {
@@ -29,9 +28,9 @@ public class AuthServiceWithEventBus implements AuthService {
     }
 
     @Override
-    public Future<Result<Void>> rbac(Collection<Action<RbacUserInfo, TargetInfo>> actions) {
+    public Future<Result<Void>> rbac(Collection<Action> actions) {
         try {
-            return eventBus.request("multi_auth_rbac", objectMapper.writeValueAsString(actions)).map(objectMessage ->
+            return eventBus.request("multi_auth_rbac", Json.encode(actions)).map(objectMessage ->
                     (Result<Void>) Json.decodeValue((String) objectMessage.body(),Result.class)
             );
         } catch (Exception e) {
