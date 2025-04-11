@@ -15,6 +15,7 @@
         <module>sso-server-login</module>
         <module>sso-server-admin</module>
         <module>sso-server-login-email-code</module>
+        <module>sso-site</module>
     </modules>
 
     <properties>
