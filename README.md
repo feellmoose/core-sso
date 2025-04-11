@@ -2,7 +2,7 @@
 
 **Pomelo SSO** is a lightweight single sign-on (SSO) system built on the OAuth 2.0 and OpenID Connect (OIDC) standards. It utilizes HTTP Cookie-based SSO session management and is designed for high-concurrency scenarios based on the Vert.x framework.
 
-English/[中文](https://github.com/feellmoose/core-sso/blob/main/README_CN.md)
+English/[中文](https://github.com/feellmoose/core-sso/blob/main/docs/README_CN.md)
 
 ## ✨ Core Features
 
