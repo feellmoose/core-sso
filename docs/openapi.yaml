@@ -9,22 +9,44 @@ servers:
 paths:
   /oauth/authorize:
     get:
-      summary: OAuth 2.0 授权端点
-      operationId: authorize
+      summary: 获取授权码（Authorization Endpoint）
+      description: 使用 Authorization Code Flow 进行授权
+      parameters:
+        - name: response_type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [code]
+        - name: client_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: redirect_uri
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: scope
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: false
+          schema:
+            type: string
       responses:
-        '302':
-          description: 重定向到客户端的授权码
-          headers:
-            Location:
-              description: 客户端重定向 URI
-              schema:
-                type: string
+        "302":
+          description: 重定向到 redirect_uri，携带 code 参数
+
   /oauth/token:
     post:
-      summary: OAuth 2.0 令牌端点
-      operationId: token
+      summary: 获取令牌（Token Endpoint）
+      description: 用授权码换取访问令牌和 ID Token
       requestBody:
-        required: true
         content:
           application/x-www-form-urlencoded:
             schema:
@@ -32,10 +54,7 @@ paths:
               properties:
                 grant_type:
                   type: string
-                  enum:
-                    - authorization_code
-                    - client_credentials
-                    - password
+                  enum: [authorization_code]
                 code:
                   type: string
                 redirect_uri:
@@ -44,15 +63,9 @@ paths:
                   type: string
                 client_secret:
                   type: string
-                username:
-                  type: string
-                password:
-                  type: string
-                scope:
-                  type: string
       responses:
-        '200':
-          description: 返回访问令牌和刷新令牌
+        "200":
+          description: 返回 access_token 和 id_token
           content:
             application/json:
               schema:
@@ -60,14 +73,69 @@ paths:
                 properties:
                   access_token:
                     type: string
+                  id_token:
+                    type: string
+                  refresh_token:
+                    type: string
                   token_type:
                     type: string
                   expires_in:
                     type: integer
-                  refresh_token:
+
+  /oauth/userinfo:
+    get:
+      summary: 获取用户信息（UserInfo Endpoint）
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: 返回 OIDC 用户信息
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sub:
                     type: string
-                  scope:
+                  name:
                     type: string
+                  email:
+                    type: string
+
+  /oauth/.well-known/openid-configuration:
+    get:
+      summary: OIDC 元数据
+      responses:
+        "200":
+          description: OpenID Provider Metadata
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  issuer:
+                    type: string
+                  authorization_endpoint:
+                    type: string
+                  token_endpoint:
+                    type: string
+                  userinfo_endpoint:
+                    type: string
+                  jwks_uri:
+                    type: string
+                  response_types_supported:
+                    type: array
+                    items:
+                      type: string
+                  scopes_supported:
+                    type: array
+                    items:
+                      type: string
+                  id_token_signing_alg_values_supported:
+                    type: array
+                    items:
+                      type: string
+
   /oauth/introspect:
     post:
       summary: OAuth 2.0 令牌自省端点
@@ -129,13 +197,14 @@ paths:
       responses:
         '200':
           description: 令牌已成功撤销
+
+
   /oauth/jwks:
     get:
-      summary: OAuth 2.0 公钥端点，用于验证 JWT 签名
-      operationId: jwks
+      summary: JWKS 公钥信息
       responses:
-        '200':
-          description: 返回 JSON Web 密钥集
+        "200":
+          description: 返回 JSON Web Key Set
           content:
             application/json:
               schema:
@@ -145,56 +214,11 @@ paths:
                     type: array
                     items:
                       type: object
-                      properties:
-                        kty:
-                          type: string
-                        kid:
-                          type: string
-                        use:
-                          type: string
-                        n:
-                          type: string
-                        e:
-                          type: string
-  /oauth/oidc:
-    get:
-      summary: OpenID Connect 配置端点
-      operationId: oidc
-      responses:
-        '200':
-          description: 返回 OpenID Connect 配置
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  issuer:
-                    type: string
-                  authorization_endpoint:
-                    type: string
-                  token_endpoint:
-                    type: string
-                  userinfo_endpoint:
-                    type: string
-                  jwks_uri:
-                    type: string
-                  response_types_supported:
-                    type: array
-                    items:
-                      type: string
-                  grant_types_supported:
-                    type: array
-                    items:
-                      type: string
-                  scopes_supported:
-                    type: array
-                    items:
-                      type: string
-                  subject_types_supported:
-                    type: array
-                    items:
-                      type: string
-                  id_token_signing_alg_values_supported:
-                    type: array
-                    items:
-                      type: string
+
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
