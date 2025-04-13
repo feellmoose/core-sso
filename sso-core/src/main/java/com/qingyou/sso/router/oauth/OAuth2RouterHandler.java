@@ -24,9 +24,30 @@ public class OAuth2RouterHandler implements Handler<Router> {
 
         router.post("/oauth/token").handler(BodyHandler.create()).handler(OAuth2ParamHandler.token()::inject).handler(oauth2Handler::token);
 
-        router.get("/oauth/info").handler(OAuth2ParamHandler.info()::inject).handler(oauth2Handler::info);
+        router.get("/oauth/userinfo").handler(OAuth2ParamHandler.info()::inject).handler(oauth2Handler::info);
 
-        router.get("/oauth/refresh").handler(OAuth2ParamHandler.refresh()::inject).handler(oauth2Handler::refresh);
+        router.get("/oauth/.well-known/openid-configuration");
+        //{
+        //  "issuer": "string",
+        //  "authorization_endpoint": "string",
+        //  "token_endpoint": "string",
+        //  "userinfo_endpoint": "string",
+        //  "jwks_uri": "string",
+        //  "response_types_supported": [
+        //    "string"
+        //  ],
+        //  "scopes_supported": [
+        //    "string"
+        //  ],
+        //  "id_token_signing_alg_values_supported": [
+        //    "string"
+        //  ]
+        //}
+
+        router.get("/oauth/logout");
+        //
+
+        router.get("/oauth/jwks");
 
         router.post("/oauth/password").handler(BodyHandler.create()).handler(OAuth2ParamHandler.password()::inject).handler(oauth2Handler::password);
 

@@ -10,7 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @AllArgsConstructor
-public class OAuth2Handler implements Authorization, Token, Verify, Refresh, Info, Password {
+public class OAuth2Handler implements Authorization, Token, Info, Password {
     private final OAuth2Service oauthService;
 
     @Override
@@ -83,42 +83,6 @@ public class OAuth2Handler implements Authorization, Token, Verify, Refresh, Inf
                 }
             }
 
-        } catch (Throwable e) {
-            OAuth2HttpResponse.fail(routingContext, e, log);
-        }
-    }
-
-    @Override
-    public void verify(RoutingContext routingContext) {
-        var validate = routingContext.<OAuth2Params.ValidationResult<OAuth2Params.Verify>>get("params");
-        if (!validate.success()) {
-            OAuth2HttpResponse.fail(routingContext, validate.error(), log);
-            return;
-        }
-        var params = validate.result();
-
-        try {
-            oauthService.verify(params)
-                    .onSuccess(accessToken -> OAuth2HttpResponse.success(routingContext, accessToken))
-                    .onFailure(ex -> OAuth2HttpResponse.fail(routingContext, ex, log));
-        } catch (Throwable e) {
-            OAuth2HttpResponse.fail(routingContext, e, log);
-        }
-    }
-
-    @Override
-    public void refresh(RoutingContext routingContext) {
-        var validate = routingContext.<OAuth2Params.ValidationResult<OAuth2Params.Refresh>>get("params");
-        if (!validate.success()) {
-            OAuth2HttpResponse.fail(routingContext, validate.error(), log);
-            return;
-        }
-        var params = validate.result();
-
-        try {
-            oauthService.refresh(params)
-                    .onSuccess(userInfo -> OAuth2HttpResponse.success(routingContext, userInfo))
-                    .onFailure(ex -> OAuth2HttpResponse.fail(routingContext, ex, log));
         } catch (Throwable e) {
             OAuth2HttpResponse.fail(routingContext, e, log);
         }
