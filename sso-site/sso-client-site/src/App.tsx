@@ -1,18 +1,18 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-
-import './App.css'
-import LoginPage from './pages/LoginPage';
+import { RouterProvider } from "react-router-dom";
+import { router } from "./router";
+import { SnackbarProvider } from "notistack";
+import { ErrorBoundaryContainer } from "./components/base/ErrorBoundary";
 
 function App() {
   return (
     <>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<LoginPage/>} />
-        </Routes>
-      </BrowserRouter>
+      <ErrorBoundaryContainer>
+        <SnackbarProvider>
+          <RouterProvider router={router} />
+        </SnackbarProvider>
+      </ErrorBoundaryContainer>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
