@@ -8,6 +8,11 @@ import java.util.stream.Collectors;
 public enum PlatformType {
     Email("email"),
     Phone("phone"),
+    Google("google"),
+    Gitlab("gitlab"),
+    Github("github"),
+    OAuth2("oauth2"),
+    Custom("custom"),
     ;
 
     private final String obj;

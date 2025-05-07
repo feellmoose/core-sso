@@ -1,0 +1,224 @@
+openapi: 3.0.0
+info:
+  title: Core-SSO API
+  description: 包含 OAuth 2.0 授权服务器以及其他登录、管理端点的 OpenAPI 文档。
+  version: "1.0"
+servers:
+  - url: https://auth.example.com
+
+paths:
+  /oauth/authorize:
+    get:
+      summary: 获取授权码（Authorization Endpoint）
+      description: 使用 Authorization Code Flow 进行授权
+      parameters:
+        - name: response_type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [code]
+        - name: client_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: redirect_uri
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: scope
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "302":
+          description: 重定向到 redirect_uri，携带 code 参数
+
+  /oauth/token:
+    post:
+      summary: 获取令牌（Token Endpoint）
+      description: 用授权码换取访问令牌和 ID Token
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                grant_type:
+                  type: string
+                  enum: [authorization_code]
+                code:
+                  type: string
+                redirect_uri:
+                  type: string
+                client_id:
+                  type: string
+                client_secret:
+                  type: string
+      responses:
+        "200":
+          description: 返回 access_token 和 id_token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                  id_token:
+                    type: string
+                  refresh_token:
+                    type: string
+                  token_type:
+                    type: string
+                  expires_in:
+                    type: integer
+
+  /oauth/userinfo:
+    get:
+      summary: 获取用户信息（UserInfo Endpoint）
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: 返回 OIDC 用户信息
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sub:
+                    type: string
+                  name:
+                    type: string
+                  email:
+                    type: string
+
+  /oauth/.well-known/openid-configuration:
+    get:
+      summary: OIDC 元数据
+      responses:
+        "200":
+          description: OpenID Provider Metadata
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  issuer:
+                    type: string
+                  authorization_endpoint:
+                    type: string
+                  token_endpoint:
+                    type: string
+                  userinfo_endpoint:
+                    type: string
+                  jwks_uri:
+                    type: string
+                  response_types_supported:
+                    type: array
+                    items:
+                      type: string
+                  scopes_supported:
+                    type: array
+                    items:
+                      type: string
+                  id_token_signing_alg_values_supported:
+                    type: array
+                    items:
+                      type: string
+
+  /oauth/introspect:
+    post:
+      summary: OAuth 2.0 令牌自省端点
+      operationId: introspect
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                token_type_hint:
+                  type: string
+      responses:
+        '200':
+          description: 返回令牌的有效性和元数据
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  active:
+                    type: boolean
+                  scope:
+                    type: string
+                  client_id:
+                    type: string
+                  username:
+                    type: string
+                  token_type:
+                    type: string
+                  exp:
+                    type: integer
+                  iat:
+                    type: integer
+                  nbf:
+                    type: integer
+  /oauth/revoke:
+    post:
+      summary: OAuth 2.0 令牌撤销端点
+      operationId: revoke
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                token_type_hint:
+                  type: string
+                client_id:
+                  type: string
+                client_secret:
+                  type: string
+      responses:
+        '200':
+          description: 令牌已成功撤销
+
+
+  /oauth/jwks:
+    get:
+      summary: JWKS 公钥信息
+      responses:
+        "200":
+          description: 返回 JSON Web Key Set
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  keys:
+                    type: array
+                    items:
+                      type: object
+
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

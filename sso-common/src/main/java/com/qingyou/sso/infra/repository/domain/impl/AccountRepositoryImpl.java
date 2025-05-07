@@ -37,4 +37,11 @@ public class AccountRepositoryImpl implements AccountRepository {
                 .execute(Tuple.of(account.getUserId(),account.getUsername(),account.getPassword(),account.getSalt()))
                 .map(rows -> account);
     }
+
+    @Override
+    public Future<Void> updatePasswordByIdAndUsername(Long userId, String username, String password, String salt) {
+        return client.preparedQuery("UPDATE sso_user.account SET password = $1, salt = $2 WHERE user_id = $3 AND username = $4")
+                .execute(Tuple.of(password,salt,userId,username)).mapEmpty();
+    }
+
 }

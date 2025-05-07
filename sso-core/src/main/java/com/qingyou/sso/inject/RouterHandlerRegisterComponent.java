@@ -1,13 +1,16 @@
 package com.qingyou.sso.inject;
 
-import com.qingyou.sso.inject.provider.*;
+import com.qingyou.sso.inject.provider.BaseModule;
+import com.qingyou.sso.inject.provider.RepositoryModule;
+import com.qingyou.sso.inject.provider.RouterHandlerModule;
+import com.qingyou.sso.inject.provider.ServiceModule;
 import com.qingyou.sso.router.admin.AdminRouterHandler;
 import com.qingyou.sso.router.global.NotFoundRouterHandler;
 import com.qingyou.sso.router.global.SessionRouterHandler;
 import com.qingyou.sso.router.oauth.OAuth2RouterHandler;
 import com.qingyou.sso.router.sso.EmailSSORouterHandler;
 import com.qingyou.sso.router.sso.LoginRouterHandler;
-import com.qingyou.sso.router.sso.SSORouterHandlerRegister;
+import com.qingyou.sso.router.sso.SSORouterHandlerRegistry;
 import dagger.Component;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -29,7 +32,7 @@ public interface RouterHandlerRegisterComponent {
 
     SessionRouterHandler registerSessionRouters();
 
-    SSORouterHandlerRegister registerSSORouterHandlerRegister();
+    SSORouterHandlerRegistry registerSSORouterHandlerRegister();
 
     AdminRouterHandler registerAdminRouters();
 
@@ -49,7 +52,7 @@ public interface RouterHandlerRegisterComponent {
         //oauth-service
         private final OAuth2RouterHandler OAuth2RouterHandler;
         //custom-login-module
-        private final SSORouterHandlerRegister SSORouterHandlerRegister;
+        private final SSORouterHandlerRegistry SSORouterHandlerRegister;
         //email-login-module
         @Nullable
         private final EmailSSORouterHandler emailSSORouterHandler;

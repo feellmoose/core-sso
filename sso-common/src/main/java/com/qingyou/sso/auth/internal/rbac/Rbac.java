@@ -1,6 +1,7 @@
 package com.qingyou.sso.auth.internal.rbac;
 
 import com.qingyou.sso.auth.api.dto.Action;
+import com.qingyou.sso.auth.api.dto.RoleAction;
 import com.qingyou.sso.auth.exception.AuthException;
 import com.qingyou.sso.domain.auth.Role;
 import com.qingyou.sso.domain.auth.TargetRole;
@@ -18,11 +19,11 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @AllArgsConstructor
-public class Rbac implements IRbac<RbacUserInfo, TargetInfo> {
+public class Rbac implements IRbac {
     private final SqlClient client;
 
     @Override
-    public Future<Boolean> enforce(Action<RbacUserInfo, TargetInfo> info) {
+    public Future<Boolean> enforce(Action info) {
         return convertInfo(info).map(v -> {
             try {
                 enforce0(v, info);
@@ -34,14 +35,14 @@ public class Rbac implements IRbac<RbacUserInfo, TargetInfo> {
     }
 
     @Override
-    public Future<Void> enforceAndThrows(Action<RbacUserInfo, TargetInfo> info) {
+    public Future<Void> enforceAndThrows(Action info) {
         return convertInfo(info).<Void>map(action -> {
             enforce0(action, info);
             return null;
         }).onFailure(ex -> log.error("error", ex));
     }
 
-    private Future<Action<List<UserRole>, TargetRole>> convertInfo(Action<RbacUserInfo, TargetInfo> info) {
+    private Future<RoleAction> convertInfo(Action info) {
         var targetInfo = info.target();
         var roles = client.preparedQuery("SELECT id,app_id,user_id,role_id FROM auth_rbac.user_role WHERE app_id = $1 AND user_id = $2")
                 .execute(Tuple.of(targetInfo.appId(),info.owned().id()))
@@ -88,7 +89,7 @@ public class Rbac implements IRbac<RbacUserInfo, TargetInfo> {
                     }
                     return Future.succeededFuture(null);
                 });
-        return Future.all(roles,target).map(v -> new Action<>(roles.result(), target.result()));
+        return Future.all(roles,target).map(v -> new RoleAction(roles.result(), target.result()));
     }
 
     private Future<List<Role>> getRoles(List<Long> ids) {
@@ -109,7 +110,7 @@ public class Rbac implements IRbac<RbacUserInfo, TargetInfo> {
     }
 
 
-    private void enforce0(Action<List<UserRole>, TargetRole> info, Action<RbacUserInfo, TargetInfo> source) throws AuthException {
+    private void enforce0(RoleAction info, Action source) throws AuthException {
         if (info.target() == null) throw new AuthException("No matching [role-config] found for " + source.target());
         List<Role> permission = info.owned().stream().map(UserRole::getRole).toList();
         List<Role> target = info.target().getRoles();
